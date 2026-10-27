@@ -12,6 +12,7 @@ using Starshot.Features.Notifications;
 using Starshot.Features.Telemetry;
 using Starshot.Features.Update;
 using Starshot.Features.ViewHost;
+using Windows.ApplicationModel.Activation;
 using Windows.UI;
 
 namespace Starshot;
@@ -118,7 +119,26 @@ public partial class App : Application
 
     private void AppInstance_Activated(object? sender, AppActivationArguments e)
     {
-        _uiDispatcherQueue.TryEnqueue(EnsureMainWindow);
+        _uiDispatcherQueue.TryEnqueue(() =>
+        {
+            // --hide 的重定向激活（自启项与已运行实例撞车等）：保持现状，不拉起主窗口
+            if (!IsHideActivation(e))
+            {
+                EnsureMainWindow();
+            }
+        });
+    }
+
+    /// <summary>
+    /// 重定向激活参数是否带 --hide：第二实例的意图只能经激活参数传入主实例，本进程命令行不含它。
+    /// </summary>
+    private static bool IsHideActivation(AppActivationArguments e)
+    {
+        return e.Kind is ExtendedActivationKind.CommandLineLaunch
+            && e.Data is ICommandLineActivatedEventArgs { Operation.Arguments: string args }
+            && args
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                .Contains("--hide", StringComparer.OrdinalIgnoreCase);
     }
 
     public new void Exit()
