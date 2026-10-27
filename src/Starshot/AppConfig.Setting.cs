@@ -365,6 +365,17 @@ public static partial class AppConfig
     }
 
     /// <summary>
+    /// 主窗口位置与大小：“x,y,width,height,maximized”，单位为物理像素，空=首次启动用系统默认。
+    /// 由 <see cref="Features.ViewHost.MainWindow"/> 在移动/缩放/隐藏/关闭时写入，
+    /// 恢复时夹到最近显示器的工作区内，避免拔掉副屏后窗口留在屏幕外。
+    /// </summary>
+    public static string? MainWindowPlacement
+    {
+        get => GetValue<string>();
+        set => SetValue(value);
+    }
+
+    /// <summary>
     /// 每次启动把进程提升为高优先级（应用自设，与启动方式无关）。关=跟随系统默认（Normal）。
     /// </summary>
     public static bool HighPriorityProcess

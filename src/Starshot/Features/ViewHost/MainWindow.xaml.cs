@@ -2,6 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Messaging;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -24,6 +25,19 @@ public sealed partial class MainWindow : WindowEx
 {
     public bool ForceExit;
 
+    /// <summary>最近一次正常态（非最大化/最小化）的位置大小，物理像素</summary>
+    private RectInt32 _placement;
+
+    private bool _placementMaximized;
+
+    private DispatcherQueueTimer? _placementTimer;
+
+    /// <summary>恢复几何期间为 true：WM_GETMINMAXINFO 不限制最小尺寸（见该方法内注释）</summary>
+    private bool _restoringPlacement;
+
+    /// <summary>待首次激活后再摆一次的几何（跨缩放比显示器时修正尺寸），物理像素</summary>
+    private RectInt32? _pendingPlacement;
+
     private SystemBackdropHelper? _backdropHelper;
 
     private Brush? _overlayAcrylicBrush; // 首次 ApplyBackdrop 时捕获 XAML 设的亚克力（用于亚克力开关还原）
@@ -35,6 +49,7 @@ public sealed partial class MainWindow : WindowEx
     public MainWindow()
     {
         InitializeComponent();
+        RestorePlacement();
         WindowEx.MainWindowId = AppWindow.Id;
         Title = "Starshot";
         // 任务管理器图标：AppWindow.SetIcon 走系统图标管线（LoadIcon 直挂 WM_SETICON 会被拉伸畸形）
@@ -57,6 +72,7 @@ public sealed partial class MainWindow : WindowEx
         );
         Activated += MainWindow_Activated;
         AppWindow.Closing += AppWindow_Closing;
+        AppWindow.Changed += AppWindow_Changed;
         ((FrameworkElement)Content).Loaded += MainWindow_Loaded;
     }
 
@@ -136,6 +152,18 @@ public sealed partial class MainWindow : WindowEx
     private void MainWindow_Activated(object sender, WindowActivatedEventArgs e)
     {
         Activated -= MainWindow_Activated;
+        _restoringPlacement = false;
+        // 首次激活时窗口已经在目标显示器上（DPI 已切换），此时再摆一次，
+        // 跨不同缩放比的显示器才能还原到精确的物理尺寸（移动瞬间会按 DIP 比例缩放一次）
+        if (_pendingPlacement is RectInt32 pending)
+        {
+            _pendingPlacement = null;
+            ApplyPlacement(pending);
+        }
+        if (_placementMaximized && AppWindow.Presenter is OverlappedPresenter presenter)
+        {
+            presenter.Maximize();
+        }
         NavView.SelectedItem = NavView.MenuItems[Math.Clamp(AppConfig.StartPage, 0, 1)];
         // 主窗口从托盘重新打开时补弹后台检查挂起的新版本（首次启动由 splash 结束处的 FlushPending 负责）
         StartupUpdateCheck.FlushPending();
@@ -166,6 +194,8 @@ public sealed partial class MainWindow : WindowEx
 
     private void AppWindow_Closing(AppWindow sender, AppWindowClosingEventArgs args)
     {
+        _placementTimer?.Stop();
+        SavePlacement();
         if (ForceExit)
         {
             return;
@@ -173,6 +203,105 @@ public sealed partial class MainWindow : WindowEx
         // 托盘恒开：关窗即最小化到托盘
         args.Cancel = true;
         Hide();
+    }
+
+    /// <summary>
+    /// 恢复上次关窗时的位置/大小。没有记录（首次启动）或记录损坏则保持系统默认。
+    /// 记录是物理像素，直接使用（不做 DIP 换算，多屏缩放比不同时才不会错位），
+    /// 再夹到最近显示器的工作区内。
+    /// </summary>
+    private void RestorePlacement()
+    {
+        if (
+            !WindowPlacement.TryParse(
+                AppConfig.MainWindowPlacement,
+                out RectInt32 rect,
+                out bool maximized
+            )
+        )
+        {
+            _placement = new RectInt32(
+                AppWindow.Position.X,
+                AppWindow.Position.Y,
+                AppWindow.Size.Width,
+                AppWindow.Size.Height
+            );
+            return;
+        }
+        _placement = rect;
+        _placementMaximized = maximized;
+        // 保持到首次激活：窗口先建在默认屏上，移动到目标屏时才触发 DPI 变化
+        _restoringPlacement = true;
+        _pendingPlacement = rect;
+        ApplyPlacement(rect);
+    }
+
+    /// <summary>
+    /// 摆到目标几何：先按当前 DPI 补足最小尺寸（避免 SetWindowPos 被 WM_GETMINMAXINFO 顶大后溢出屏幕），
+    /// 再夹到最近显示器的工作区内。
+    /// </summary>
+    private void ApplyPlacement(RectInt32 rect)
+    {
+        int minWidth = (int)(1200 * UIScale);
+        int minHeight = (int)(676 * UIScale);
+        RectInt32 target = new(
+            rect.X,
+            rect.Y,
+            Math.Max(rect.Width, minWidth),
+            Math.Max(rect.Height, minHeight)
+        );
+        AppWindow.MoveAndResize(WindowPlacement.EnsureVisible(target));
+    }
+
+    /// <summary>
+    /// 记录当前几何：最大化时保留进入最大化前的位置（此时 AppWindow.Position/Size 是最大化后的矩形），
+    /// 最小化时不写（尺寸不可信）。只在值变化时落盘，SetValue 内部会跳过重复值。
+    /// </summary>
+    private void SavePlacement()
+    {
+        if (AppWindow.Presenter is not OverlappedPresenter presenter)
+        {
+            return;
+        }
+        switch (presenter.State)
+        {
+            case OverlappedPresenterState.Minimized:
+                return;
+            case OverlappedPresenterState.Maximized:
+                _placementMaximized = true;
+                break;
+            default:
+                _placement = new RectInt32(
+                    AppWindow.Position.X,
+                    AppWindow.Position.Y,
+                    AppWindow.Size.Width,
+                    AppWindow.Size.Height
+                );
+                _placementMaximized = false;
+                break;
+        }
+        AppConfig.MainWindowPlacement = WindowPlacement.Format(_placement, _placementMaximized);
+    }
+
+    private void AppWindow_Changed(AppWindow sender, AppWindowChangedEventArgs args)
+    {
+        if (!args.DidPositionChange && !args.DidSizeChange && !args.DidPresenterChange)
+        {
+            return;
+        }
+        // 拖动/缩放途中 Changed 触发很密，防抖 500ms，避免每帧写一次 config
+        _placementTimer ??= CreatePlacementTimer();
+        _placementTimer.Stop();
+        _placementTimer.Start();
+    }
+
+    private DispatcherQueueTimer CreatePlacementTimer()
+    {
+        DispatcherQueueTimer timer = DispatcherQueue.CreateTimer();
+        timer.Interval = TimeSpan.FromMilliseconds(500);
+        timer.IsRepeating = false;
+        timer.Tick += (_, _) => SavePlacement();
+        return timer;
     }
 
     [DllImport("Wtsapi32.dll")]
@@ -213,6 +342,12 @@ public sealed partial class MainWindow : WindowEx
         }
         else if (uMsg == (uint)User32.WindowMessage.WM_GETMINMAXINFO)
         {
+            // 恢复期间不限制最小尺寸：窗口在创建时可能还挂在另一块缩放不同的屏上，
+            // 此时的最小尺寸按那块屏算，会把跨屏恢复到的小尺寸窗口强行撑大。
+            if (_restoringPlacement)
+            {
+                return 0;
+            }
             // 最小尺寸与 Starward 主窗口一致（1200×676 逻辑像素，按 DPI 缩放到物理像素）
             unsafe
             {
@@ -230,6 +365,9 @@ public sealed partial class MainWindow : WindowEx
     /// </summary>
     public override void Hide()
     {
+        // 托盘化时立即落盘，不等防抖定时器（用户可能拖完窗口立刻关窗/退出）
+        _placementTimer?.Stop();
+        SavePlacement();
         base.Hide();
         WeakReferenceMessenger.Default.Send(new MainWindowStateChangedMessage { Hide = true });
     }
