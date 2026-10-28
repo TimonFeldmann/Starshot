@@ -378,7 +378,7 @@ public sealed partial class ScreenshotEditWindow : WindowEx
         _selected = null;
         EndMove();
         // 切换工具时收起画笔光标预览
-        Grid_BrushPreview.Visibility = Visibility.Collapsed;
+        Canvas_BrushPreview.Visibility = Visibility.Collapsed;
         UpdateOptionsPanel();
         Redraw();
     }
@@ -509,20 +509,21 @@ public sealed partial class ScreenshotEditWindow : WindowEx
     {
         if (!IsBrushOrHighlightActive() || _isDrawing || _moving is not null)
         {
-            Grid_BrushPreview.Visibility = Visibility.Collapsed;
+            Canvas_BrushPreview.Visibility = Visibility.Collapsed;
             return;
         }
         float scale = DisplayScale();
         if (scale <= 0f)
         {
-            Grid_BrushPreview.Visibility = Visibility.Collapsed;
+            Canvas_BrushPreview.Visibility = Visibility.Collapsed;
             return;
         }
         float size = Math.Max(2f, GetCurrentThickness() * scale);
         _lastPreviewPoint = controlPoint;
         // 外圈黑色底环（深底色上可见），内圈当前色 + 浅色填充（显示颜色与高亮的半透明感）
-        Ellipse_BrushPreviewOuter.Width = size + 3f;
-        Ellipse_BrushPreviewOuter.Height = size + 3f;
+        float outer = size + 3f;
+        Ellipse_BrushPreviewOuter.Width = outer;
+        Ellipse_BrushPreviewOuter.Height = outer;
         Ellipse_BrushPreviewInner.Width = size;
         Ellipse_BrushPreviewInner.Height = size;
         Color c = GetCurrentColor();
@@ -530,19 +531,25 @@ public sealed partial class ScreenshotEditWindow : WindowEx
         fill.Opacity = 0.2f;
         Ellipse_BrushPreviewInner.Stroke = new SolidColorBrush(c);
         Ellipse_BrushPreviewInner.Fill = fill;
-        Grid_BrushPreview.Margin = new Thickness(
-            (float)controlPoint.X - (size + 3f) / 2f,
-            (float)controlPoint.Y - (size + 3f) / 2f,
-            0,
-            0
-        );
-        Grid_BrushPreview.Visibility = Visibility.Visible;
+        // 双环同心、中心对齐指针（Canvas 子元素按 Left/Top 定位，与 0x0 Grid 不同不会渲染丢失；
+        // 本文件同时引入 Win2D 的 Microsoft.Graphics.Canvas，故全限定 XAML Canvas）。
+        // controlPoint 在 Image 坐标空间（本投影中 = 实际渲染内容区，Uniform 留边时与控件边界有偏移），
+        // 画布填满整个单元格——必须经 TransformToVisual 转换到画布空间才能与指针重合
+        var xform = Image_Image.TransformToVisual(Canvas_BrushPreview);
+        Windows.Foundation.Point pc = xform.TransformPoint(controlPoint);
+        float cx = (float)pc.X;
+        float cy = (float)pc.Y;
+        Microsoft.UI.Xaml.Controls.Canvas.SetLeft(Ellipse_BrushPreviewOuter, cx - outer / 2f);
+        Microsoft.UI.Xaml.Controls.Canvas.SetTop(Ellipse_BrushPreviewOuter, cy - outer / 2f);
+        Microsoft.UI.Xaml.Controls.Canvas.SetLeft(Ellipse_BrushPreviewInner, cx - size / 2f);
+        Microsoft.UI.Xaml.Controls.Canvas.SetTop(Ellipse_BrushPreviewInner, cy - size / 2f);
+        Canvas_BrushPreview.Visibility = Visibility.Visible;
     }
 
     /// <summary>颜色/粗细变化时按最后位置刷新光标预览（预览不可见时不做事）。</summary>
     private void RefreshBrushPreview()
     {
-        if (Grid_BrushPreview.Visibility != Visibility.Visible)
+        if (Canvas_BrushPreview.Visibility != Visibility.Visible)
         {
             return;
         }
@@ -756,7 +763,7 @@ public sealed partial class ScreenshotEditWindow : WindowEx
                 },
             };
             _isDrawing = true;
-            Grid_BrushPreview.Visibility = Visibility.Collapsed;
+            Canvas_BrushPreview.Visibility = Visibility.Collapsed;
             e.Handled = true;
             Redraw();
             return;
@@ -791,7 +798,7 @@ public sealed partial class ScreenshotEditWindow : WindowEx
             _current.Stroke.Points.Add(pos);
             _isDrawing = true;
             // 开始绘制即收起光标预览
-            Grid_BrushPreview.Visibility = Visibility.Collapsed;
+            Canvas_BrushPreview.Visibility = Visibility.Collapsed;
             e.Handled = true;
             Redraw();
         }

@@ -388,16 +388,9 @@
       <Grid Margin="16">
         <Image x:Name="Image_Image" Stretch="Uniform" />
         <!--  画笔/高亮光标预览：跟随指针的圆圈（直径 = 当前粗细 × 显示缩放），
-              仅工具激活且非绘制中可见；0x0 定位层 + 负边距居中，不拦截指针事件  -->
-        <Grid
-          x:Name="Grid_BrushPreview"
-          Width="0"
-          Height="0"
-          HorizontalAlignment="Left"
-          VerticalAlignment="Top"
-          IsHitTestVisible="False"
-          Visibility="Collapsed"
-        >
+              仅工具激活且非绘制中可见；Canvas 期望尺寸为 0 不影响布局、不拦截指针事件，
+              子元素按 Canvas.Left/Top 定位（0x0 Grid 的子元素在本投影不渲染）  -->
+        <Canvas x:Name="Canvas_BrushPreview" IsHitTestVisible="False" Visibility="Collapsed">
           <Ellipse
             x:Name="Ellipse_BrushPreviewOuter"
             Width="16"
@@ -412,7 +405,7 @@
             Height="13"
             StrokeThickness="1.5"
           />
-        </Grid>
+        </Canvas>
       </Grid>
     </Grid>
 
