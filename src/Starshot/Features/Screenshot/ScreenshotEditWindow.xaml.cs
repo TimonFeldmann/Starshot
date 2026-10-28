@@ -8,6 +8,7 @@ using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Effects;
 using Microsoft.Graphics.Canvas.UI.Xaml;
 using Microsoft.UI;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
@@ -104,6 +105,18 @@ public sealed partial class ScreenshotEditWindow : WindowEx
     /// <summary>被拖按钮按下时的 IsChecked（拖拽结束后恢复，避免误切换工具）。</summary>
     private bool _toolPressWasChecked;
 
+    /// <summary>悬停提示当前指向的工具按钮（null = 无悬停目标，提示已清除）。</summary>
+    private object? _toolHoverBtn;
+
+    /// <summary>悬停提示是否已显示（同按钮重复进入不重排；换按钮时保留旧提示至重定位）。</summary>
+    private bool _toolHoverShown;
+
+    /// <summary>
+    /// 悬停提示延迟定时器：换到新按钮后延迟 350ms 显示（模拟标准 tooltip 延迟，
+    /// 同按钮内移动不重置）；进入按钮间隙 / 离开覆盖层 / 拖拽开始时取消并收起
+    /// </summary>
+    private readonly DispatcherQueueTimer _toolHoverTimer;
+
     // ---- 画笔光标预览 ----
 
     /// <summary>光标预览最后位置（Image 控件坐标）：颜色/粗细变化时刷新用。</summary>
@@ -156,6 +169,16 @@ public sealed partial class ScreenshotEditWindow : WindowEx
         UpdateShapeSwatch();
         // 应用上一次会话的工具按钮顺序（拖拽换序持久化）
         ApplySavedToolbarOrder();
+        // 隐藏设置页禁用的工具（与设置页共用 ScreenshotEditDisabledTools 配置）
+        ApplyToolEnabledState();
+        // 悬停提示延迟定时器：换到新按钮 350ms 后显示轻量提示（Tip_ToolHover）
+        _toolHoverTimer = DispatcherQueue.CreateTimer();
+        _toolHoverTimer.Interval = TimeSpan.FromMilliseconds(350);
+        _toolHoverTimer.Tick += (_, __) =>
+        {
+            _toolHoverTimer.Stop();
+            ShowToolHoverTip();
+        };
         // 工具按钮换序：透明覆盖层（Overlay_ToolDrag）统一拦截按钮组上方的指针事件——
         // ToggleButton 会在隧道阶段吞掉左键按下（内部点击态），按钮级/根级都收不到左键事件；
         // 普通 Grid 覆盖层无内部点击态：左键按下即捕获指针、移动实时换位、释放时持久化并透传点击
@@ -164,6 +187,8 @@ public sealed partial class ScreenshotEditWindow : WindowEx
         Overlay_ToolDrag.PointerMoved += Overlay_ToolDrag_PointerMoved;
         Overlay_ToolDrag.PointerReleased += Overlay_ToolDrag_PointerReleased;
         Overlay_ToolDrag.PointerCanceled += Overlay_ToolDrag_PointerCanceled;
+        Overlay_ToolDrag.PointerEntered += Overlay_ToolDrag_PointerEntered;
+        Overlay_ToolDrag.PointerExited += Overlay_ToolDrag_PointerExited;
         // 颜色/粗细变化时刷新光标预览
         ColorPicker_Color.ColorChanged += (_, __) => RefreshBrushPreview();
         Slider_Thickness.ValueChanged += (_, __) => RefreshBrushPreview();
@@ -1095,13 +1120,126 @@ public sealed partial class ScreenshotEditWindow : WindowEx
         _toolDragMoved = false;
         _toolPressWasChecked = _toolDragButton.IsChecked == true;
         _toolDragStart = new Vector2((float)p0.X, (float)p0.Y);
+        // 拖拽期间不显示悬停提示
+        HideToolHoverTooltip();
         ((Microsoft.UI.Xaml.UIElement)Overlay_ToolDrag).CapturePointer(e.Pointer);
     }
 
-    /// <summary>覆盖层指针移动：拖拽期间按指针 X 实时换位（捕获后所有移动都路由到覆盖层）。</summary>
+    /// <summary>覆盖层指针移动：拖拽中按指针 X 实时换位；未拖拽（纯悬停）时刷新覆盖层悬停提示。</summary>
     private void Overlay_ToolDrag_PointerMoved(object sender, PointerRoutedEventArgs e)
     {
+        if (_toolDragButton is null)
+        {
+            UpdateOverlayHoverTooltip(e);
+        }
         TryReorderToolDrag(e);
+    }
+
+    /// <summary>
+    /// 悬停提示：覆盖层挡住按钮后，按钮自身的 ToolTipService 不再被悬停自动触发
+    ///（且显式 ToolTip 实例在本投影会原生崩溃），改为在悬停按钮下方摆放轻量提示
+    /// （Tip_ToolHover）：按指针位置查按钮（须落在按钮实际横向范围内，按钮间隙不显示），
+    /// 换到新按钮后延迟 350ms 显示——恢复"悬停工具按钮显示工具名"。
+    /// </summary>
+    private void UpdateOverlayHoverTooltip(PointerRoutedEventArgs e)
+    {
+        Windows.Foundation.Point p = e.GetCurrentPoint(Panel_ToolButtons).Position;
+        object? btn = null;
+        foreach (var child in Panel_ToolButtons.Children)
+        {
+            if (child.Visibility != Visibility.Visible)
+            {
+                continue;
+            }
+            var fe = (Microsoft.UI.Xaml.FrameworkElement)child;
+            var t = fe.TransformToVisual(Panel_ToolButtons);
+            Windows.Foundation.Point o = t.TransformPoint(new Windows.Foundation.Point(0, 0));
+            float left = (float)o.X;
+            float right = left + (float)fe.ActualWidth;
+            if ((float)p.X >= left && (float)p.X <= right)
+            {
+                btn = child;
+                break;
+            }
+        }
+        if (btn is null)
+        {
+            HideToolHoverTooltip(); // 按钮间隙：取消延迟并收起
+            return;
+        }
+        if (ReferenceEquals(btn, _toolHoverBtn))
+        {
+            return; // 同按钮：已显示或延迟计时中，同按钮内移动不重置
+        }
+        _toolHoverBtn = btn;
+        // 换到新按钮：旧提示保留至 350ms 后重定位（模拟标准 tooltip 的切换行为）
+        _toolHoverTimer.Stop();
+        _toolHoverTimer.Start();
+    }
+
+    /// <summary>定时器到点：把提示摆到目标按钮正下方（根 Grid 坐标，水平居中并夹在窗内）。</summary>
+    private void ShowToolHoverTip()
+    {
+        if (_toolHoverBtn is null)
+        {
+            return;
+        }
+        string? tip =
+            Microsoft.UI.Xaml.Controls.ToolTipService.GetToolTip(
+                (Microsoft.UI.Xaml.DependencyObject)_toolHoverBtn
+            ) as string;
+        if (string.IsNullOrEmpty(tip))
+        {
+            _toolHoverBtn = null;
+            return;
+        }
+        var fe = (Microsoft.UI.Xaml.FrameworkElement)_toolHoverBtn;
+        var t = fe.TransformToVisual(RootGrid);
+        Windows.Foundation.Point o = t.TransformPoint(new Windows.Foundation.Point(0, 0));
+        float btnLeft = (float)o.X;
+        float btnTop = (float)o.Y;
+        float btnWidth = (float)fe.ActualWidth;
+        float btnHeight = (float)fe.ActualHeight;
+        TextBlock_ToolHover.Text = tip;
+        Tip_ToolHover.Measure(
+            new Windows.Foundation.Size(double.PositiveInfinity, double.PositiveInfinity)
+        );
+        float hintWidth = (float)Tip_ToolHover.DesiredSize.Width;
+        float left = btnLeft + btnWidth / 2f - hintWidth / 2f;
+        float maxLeft = Math.Max(0f, (float)RootGrid.ActualWidth - hintWidth);
+        left = Math.Clamp(left, 0f, maxLeft);
+        float top = btnTop + btnHeight + 6f;
+        Microsoft.UI.Xaml.Controls.Canvas.SetLeft(Tip_ToolHover, left);
+        Microsoft.UI.Xaml.Controls.Canvas.SetTop(Tip_ToolHover, top);
+        Tip_ToolHover.Visibility = Visibility.Visible;
+        _toolHoverShown = true;
+    }
+
+    /// <summary>隐藏工具悬停提示（悬停到按钮间隙 / 离开覆盖层 / 拖拽开始时）。</summary>
+    private void HideToolHoverTooltip()
+    {
+        _toolHoverTimer.Stop();
+        _toolHoverBtn = null;
+        if (_toolHoverShown)
+        {
+            Tip_ToolHover.Visibility = Visibility.Collapsed;
+            _toolHoverShown = false;
+        }
+    }
+
+    /// <summary>指针进入覆盖层：按进入点刷新悬停提示（按住不动时没有 Moved 事件，进入即需处理）。</summary>
+    private void Overlay_ToolDrag_PointerEntered(object sender, PointerRoutedEventArgs e)
+    {
+        if (_toolDragButton is null)
+        {
+            UpdateOverlayHoverTooltip(e);
+        }
+    }
+
+    /// <summary>指针离开覆盖层：清除悬停提示。</summary>
+    private void Overlay_ToolDrag_PointerExited(object sender, PointerRoutedEventArgs e)
+    {
+        HideToolHoverTooltip();
     }
 
     /// <summary>覆盖层指针释放：拖拽过则持久化顺序；未移动则透传为释放点下按钮的一次点击。</summary>
@@ -1156,7 +1294,7 @@ public sealed partial class ScreenshotEditWindow : WindowEx
         }
     }
 
-    /// <summary>按指针 X 找当前排布序中中心点最近的工具按钮下标（覆盖层与按钮组同宽，必有结果）。</summary>
+    /// <summary>按指针 X 找当前排布序中中心点最近的可见工具按钮下标（隐藏/禁用按钮不参与）。</summary>
     private int ToolButtonIndexAtX(float x)
     {
         var children = Panel_ToolButtons.Children;
@@ -1164,6 +1302,10 @@ public sealed partial class ScreenshotEditWindow : WindowEx
         float bestDist = float.MaxValue;
         for (int i = 0; i < children.Count; i++)
         {
+            if (children[i].Visibility != Visibility.Visible)
+            {
+                continue;
+            }
             float d = MathF.Abs(ToolButtonCenterX(children[i]) - x);
             if (d < bestDist)
             {
@@ -1237,12 +1379,21 @@ public sealed partial class ScreenshotEditWindow : WindowEx
             return;
         }
         var children = Panel_ToolButtons.Children;
-        int from = -1;
-        var centers = new float[children.Count];
-        for (int i = 0; i < centers.Length; i++)
+        // 仅可见按钮参与换位（设置页禁用的工具已隐藏、宽度为 0，中心计算会失真）
+        var visible = new List<object>();
+        for (int i = 0; i < children.Count; i++)
         {
-            centers[i] = ToolButtonCenterX(children[i]);
-            if (ReferenceEquals(children[i], _toolDragButton))
+            if (children[i].Visibility == Visibility.Visible)
+            {
+                visible.Add(children[i]);
+            }
+        }
+        int from = -1;
+        var centers = new float[visible.Count];
+        for (int i = 0; i < visible.Count; i++)
+        {
+            centers[i] = ToolButtonCenterX(visible[i]);
+            if (ReferenceEquals(visible[i], _toolDragButton))
             {
                 from = i;
             }
@@ -1254,6 +1405,7 @@ public sealed partial class ScreenshotEditWindow : WindowEx
         // 目标序 = 中心落在指针左侧的其他按钮个数（自身除外）：
         // 指针越过谁的中点，被拖按钮就换到该位置。必须用指针 X 而非被拖按钮自身的
         // 布局中心——后者在换位前是静态的，会导致目标序恒等于当前序、永不换位。
+        // 隐藏项不占可见序：换位只改变可见按钮的相对顺序，隐藏项的绝对位置不动
         int target = 0;
         for (int i = 0; i < centers.Length; i++)
         {
@@ -1264,8 +1416,50 @@ public sealed partial class ScreenshotEditWindow : WindowEx
         }
         if (target != from)
         {
-            children.RemoveAt(from);
-            children.Insert(target, _toolDragButton);
+            object dragged = _toolDragButton;
+            var after = new List<object>(visible);
+            after.Remove(dragged);
+            // 与原全可见逻辑同语义：移除后按可见序 target 插入（before after[target]）；
+            // target 为末位时插到最后一个可见按钮之后（隐藏项的绝对位置不受影响）
+            int insertAbs = children.Count;
+            if (target < after.Count)
+            {
+                for (int i = 0; i < children.Count; i++)
+                {
+                    if (ReferenceEquals(children[i], after[target]))
+                    {
+                        insertAbs = i;
+                        break;
+                    }
+                }
+            }
+            else if (after.Count > 0)
+            {
+                for (int i = 0; i < children.Count; i++)
+                {
+                    if (ReferenceEquals(children[i], after[after.Count - 1]))
+                    {
+                        insertAbs = i + 1;
+                        break;
+                    }
+                }
+            }
+            int removeAbs = -1;
+            for (int i = 0; i < children.Count; i++)
+            {
+                if (ReferenceEquals(children[i], dragged))
+                {
+                    removeAbs = i;
+                    break;
+                }
+            }
+            children.RemoveAt(removeAbs);
+            // 移除后绝对位后移了一位（插入位在被移除项之后时）
+            if (insertAbs > removeAbs)
+            {
+                insertAbs--;
+            }
+            children.Insert(insertAbs, (Microsoft.UI.Xaml.UIElement)dragged);
             // 换位后强制一次布局：否则渲染层中心仍停留在旧位置，
             // 后续移动事件会按过期中心计算目标序、按钮卡住不跟随指针。
             Panel_ToolButtons.UpdateLayout();
@@ -1376,6 +1570,20 @@ public sealed partial class ScreenshotEditWindow : WindowEx
         for (int i = 0; i < wanted.Count; i++)
         {
             children.Insert(i, (Microsoft.UI.Xaml.UIElement)wanted[i]);
+        }
+    }
+
+    /// <summary>隐藏设置页禁用的工具按钮（设置页可重新启用，顺序配置中的位置保持不变）。</summary>
+    private void ApplyToolEnabledState()
+    {
+        var disabled = AppConfig.ScreenshotEditDisabledTools;
+        foreach (var child in Panel_ToolButtons.Children)
+        {
+            string? name = ToolButtonName(child);
+            if (name is not null && disabled.Contains(name))
+            {
+                child.Visibility = Visibility.Collapsed;
+            }
         }
     }
 

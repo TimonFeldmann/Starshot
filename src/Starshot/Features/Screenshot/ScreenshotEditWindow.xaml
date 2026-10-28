@@ -20,7 +20,7 @@
 
     <!--  工具栏：按钮 + 内联工具选项（模糊强度 / 颜色与粗细），占一行不压缩图像。
           左组 = 工具按钮 + 内联选项；动作组 = 撤销/清空/保存/关闭，居中独立成组  -->
-    <Grid Grid.Row="0" Padding="8,6">
+    <Grid x:Name="Grid_ToolbarRow" Grid.Row="0" Padding="8,6">
       <StackPanel Orientation="Horizontal" Spacing="6">
         <!--  工具按钮组：支持拖拽换序（透明指针覆盖层统一拦截，实时换位，释放时持久化到配置）  -->
         <Grid>
@@ -426,5 +426,32 @@
       Text="{x:Bind lang:Lang.ScreenshotEditWindow_DragHint}"
       TextTrimming="CharacterEllipsis"
     />
+    <!--  工具悬停提示：拖拽覆盖层挡住按钮后原生 ToolTip 不再触发（显式 ToolTip 实例在本投影会崩溃
+          XAML 框架），改由代码在悬停按钮下方摆放此轻量提示（350ms 延迟模拟标准 tooltip）。
+          0 期望尺寸 Canvas 作根 Grid 最后一个子（覆盖全窗、渲染最上层、不影响行高）  -->
+    <Canvas
+      x:Name="Canvas_ToolTips"
+      Grid.Row="0"
+      Grid.RowSpan="3"
+      Background="Transparent"
+      IsHitTestVisible="False"
+    >
+      <Border
+        x:Name="Tip_ToolHover"
+        Background="{ThemeResource ToolTipBackgroundThemeBrush}"
+        BorderBrush="{ThemeResource ToolTipBorderThemeBrush}"
+        BorderThickness="1"
+        CornerRadius="4"
+        IsHitTestVisible="False"
+        Padding="8,4"
+        Visibility="Collapsed"
+      >
+        <TextBlock
+          x:Name="TextBlock_ToolHover"
+          FontSize="12"
+          Foreground="{ThemeResource ToolTipForegroundThemeBrush}"
+        />
+      </Border>
+    </Canvas>
   </Grid>
 </sf:WindowEx>

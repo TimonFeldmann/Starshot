@@ -723,6 +723,33 @@ public static partial class AppConfig
         set => SetListValue(value);
     }
 
+    /// <summary>
+    /// 截图后是否打开标注编辑器（默认开，保持历史行为；关闭后截图仅保存文件）
+    /// </summary>
+    public static bool ScreenshotEditorOpenAfterCapture
+    {
+        get => GetValue(true);
+        set => SetValue(value);
+    }
+
+    /// <summary>
+    /// 标注编辑器中禁用的工具名列表（空 = 全部启用）；编辑器打开时按此隐藏对应工具按钮
+    /// </summary>
+    public static List<string> ScreenshotEditDisabledTools
+    {
+        get => GetListValue();
+        set => SetListValue(value);
+    }
+
+    /// <summary>
+    /// 截图完成后是否打开截图文件夹（开了编辑器则在编辑器关闭后打开；默认关）
+    /// </summary>
+    public static bool OpenScreenshotFolderAfterCapture
+    {
+        get => GetValue(false);
+        set => SetValue(value);
+    }
+
     #endregion
 
 

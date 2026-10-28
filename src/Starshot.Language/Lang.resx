@@ -325,6 +325,18 @@
   <data name="ScreenshotSetting_OcrEngineDesc" xml:space="preserve">
     <value>Recognize text in images from the viewer</value>
   </data>
+  <data name="EditorSetting_OpenAfterCapture" xml:space="preserve">
+    <value>Open editor after capture</value>
+  </data>
+  <data name="EditorSetting_OpenAfterCaptureDesc" xml:space="preserve">
+    <value>The markup editor opens automatically after a screenshot is taken</value>
+  </data>
+  <data name="EditorSetting_Tools" xml:space="preserve">
+    <value>Tools</value>
+  </data>
+  <data name="EditorSetting_ToolsDesc" xml:space="preserve">
+    <value>Enable tools and set their display order in the editor toolbar</value>
+  </data>
   <data name="ImageViewWindow_Previous" xml:space="preserve">
     <value>Previous</value>
     <comment>Previous Image</comment>
@@ -531,6 +543,9 @@
   </data>
   <data name="Starshot_Nav_Appearance" xml:space="preserve">
     <value>Appearance</value>
+  </data>
+  <data name="Starshot_Nav_Editor" xml:space="preserve">
+    <value>Editor</value>
   </data>
   <data name="Starshot_Nav_Hotkey" xml:space="preserve">
     <value>Hotkeys</value>
@@ -999,6 +1014,12 @@
   </data>
   <data name="Starshot_ScreenshotSubfolderDesc" xml:space="preserve">
     <value>When enabled, screenshots are saved into a subfolder under the screenshot folder, named by the template below.</value>
+  </data>
+  <data name="Starshot_OpenFolderAfterCapture" xml:space="preserve">
+    <value>Open folder after capture</value>
+  </data>
+  <data name="Starshot_OpenFolderAfterCaptureDesc" xml:space="preserve">
+    <value>Open the screenshot folder in Explorer after a capture; when the editor is opened it opens after the editor closes</value>
   </data>
   <data name="Starshot_AlreadyDefault" xml:space="preserve">
     <value>Already the default</value>

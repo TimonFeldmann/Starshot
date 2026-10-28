@@ -192,29 +192,37 @@ internal class ScreenCaptureService
             );
             _logger.LogInformation("Screenshot saved");
 
-            // 原始图已在上面保存；这里打开标注编辑窗口（保存按钮写 -marked 副本）。
+            // 原始图已在上面保存；按设置打开标注编辑窗口（保存按钮写 -marked 副本）。
             // 单独 try/catch：打开窗口失败不应把已成功的捕获降级成错误。
-            try
+            if (AppConfig.ScreenshotEditorOpenAfterCapture)
             {
-                OpenEditWindow(
-                    canvasBitmap,
-                    new ScreenshotEditContext
-                    {
-                        ProcessName = processName,
-                        ProcessExeName = processExeName,
-                        WindowTitle = windowTitle,
-                        FrameTime = frameTime,
-                        SdrWhiteLevel = sdrWhiteLevel,
-                        IsRegion = false,
-                        DisplayId = displayId,
-                        Width = (int)canvasBitmap.SizeInPixels.Width,
-                        Height = (int)canvasBitmap.SizeInPixels.Height,
-                    }
-                );
+                try
+                {
+                    OpenEditWindow(
+                        canvasBitmap,
+                        new ScreenshotEditContext
+                        {
+                            ProcessName = processName,
+                            ProcessExeName = processExeName,
+                            WindowTitle = windowTitle,
+                            FrameTime = frameTime,
+                            SdrWhiteLevel = sdrWhiteLevel,
+                            IsRegion = false,
+                            DisplayId = displayId,
+                            Width = (int)canvasBitmap.SizeInPixels.Width,
+                            Height = (int)canvasBitmap.SizeInPixels.Height,
+                        },
+                        onClosed: MaybeOpenScreenshotFolder
+                    );
+                }
+                catch (Exception openEx)
+                {
+                    _logger.LogWarning(openEx, "Failed to open edit window after capture");
+                }
             }
-            catch (Exception openEx)
+            else
             {
-                _logger.LogWarning(openEx, "Failed to open edit window after capture");
+                MaybeOpenScreenshotFolder(); // 不开编辑器时捕获完成即按设置打开文件夹
             }
         }
         catch (Exception ex)
@@ -619,29 +627,37 @@ internal class ScreenCaptureService
             );
             _logger.LogInformation("Region screenshot saved");
 
-            // 原始图已在上面保存；打开标注编辑窗口（保存按钮写 -marked 副本）。
+            // 原始图已在上面保存；按设置打开标注编辑窗口（保存按钮写 -marked 副本）。
             // 窗口在构造时已把 cropped 同步转成 8 位 SDR 副本持有，finally 释放 cropped 安全。
-            try
+            if (AppConfig.ScreenshotEditorOpenAfterCapture)
             {
-                OpenEditWindow(
-                    cropped,
-                    new ScreenshotEditContext
-                    {
-                        ProcessName = processName,
-                        ProcessExeName = processExeName,
-                        WindowTitle = windowTitle,
-                        FrameTime = frameTime,
-                        SdrWhiteLevel = sdrWhiteLevel,
-                        IsRegion = true,
-                        DisplayId = regionDisplayId,
-                        Width = cw,
-                        Height = ch,
-                    }
-                );
+                try
+                {
+                    OpenEditWindow(
+                        cropped,
+                        new ScreenshotEditContext
+                        {
+                            ProcessName = processName,
+                            ProcessExeName = processExeName,
+                            WindowTitle = windowTitle,
+                            FrameTime = frameTime,
+                            SdrWhiteLevel = sdrWhiteLevel,
+                            IsRegion = true,
+                            DisplayId = regionDisplayId,
+                            Width = cw,
+                            Height = ch,
+                        },
+                        onClosed: MaybeOpenScreenshotFolder
+                    );
+                }
+                catch (Exception openEx)
+                {
+                    _logger.LogWarning(openEx, "Failed to open edit window after region capture");
+                }
             }
-            catch (Exception openEx)
+            else
             {
-                _logger.LogWarning(openEx, "Failed to open edit window after region capture");
+                MaybeOpenScreenshotFolder();
             }
         }
         catch (Exception ex)
@@ -924,11 +940,45 @@ internal class ScreenCaptureService
     public static void OpenEditWindow(
         ICanvasImage source,
         ScreenshotEditContext ctx,
-        IReadOnlyList<ScreenshotOp>? initialOps = null
+        IReadOnlyList<ScreenshotOp>? initialOps = null,
+        Action? onClosed = null
     )
     {
         var window = new ScreenshotEditWindow(source, ctx, initialOps);
+        if (onClosed is not null)
+        {
+            window.Closed += (_, __) => onClosed();
+        }
         window.Show();
+    }
+
+    /// <summary>
+    /// 按设置打开截图文件夹（未启用时直接返回）。两种时机：编辑器关闭时（捕获路径传入 onClosed）
+    /// 与编辑器未打开时的捕获完成即调用。
+    /// </summary>
+    public static void MaybeOpenScreenshotFolder()
+    {
+        if (!AppConfig.OpenScreenshotFolderAfterCapture)
+        {
+            return;
+        }
+        try
+        {
+            string folder = AppConfig.ScreenshotFolder;
+            if (Directory.Exists(folder))
+            {
+                Process.Start(
+                    new ProcessStartInfo("explorer.exe", $"\"{folder}\"") { UseShellExecute = true }
+                );
+            }
+        }
+        catch (Exception ex)
+        {
+            // 静态方法无实例 _logger（与 CopyCaptureToClipboardAsync 一致，本地取）
+            AppConfig
+                .GetLogger<ScreenCaptureService>()
+                .LogWarning(ex, "Failed to open screenshot folder");
+        }
     }
 
     /// <summary>

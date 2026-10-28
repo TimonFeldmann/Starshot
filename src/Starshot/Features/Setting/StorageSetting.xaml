@@ -166,6 +166,18 @@
             TextTrimming="CharacterEllipsis"
           />
         </StackPanel>
+        <!--  截图后打开文件夹（开了编辑器则在编辑器关闭后）  -->
+        <ToggleSwitch
+          IsOn="{x:Bind OpenScreenshotFolderAfterCapture, Mode=TwoWay}"
+          OffContent="{x:Bind lang:Lang.Starshot_OpenFolderAfterCapture}"
+          OnContent="{x:Bind lang:Lang.Starshot_OpenFolderAfterCapture}"
+        />
+        <TextBlock
+          FontSize="12"
+          Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+          Text="{x:Bind lang:Lang.Starshot_OpenFolderAfterCaptureDesc}"
+          TextWrapping="Wrap"
+        />
       </StackPanel>
 
       <!--  备份与恢复：备份固定写 LocalAppData；导出/导入走 JSON 文件  -->

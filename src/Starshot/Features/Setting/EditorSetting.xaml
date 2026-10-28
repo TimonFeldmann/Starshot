@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<sf:PageBase
+  x:Class="Starshot.Features.Setting.EditorSetting"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:lang="using:Starshot.Language"
+  xmlns:local="using:Starshot.Features.Setting"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  xmlns:sf="using:Starshot.Frameworks"
+  x:DefaultBindMode="OneWay"
+  mc:Ignorable="d"
+>
+  <ScrollViewer Padding="0">
+    <StackPanel Width="820" Padding="36,24,36,36" Spacing="20">
+      <TextBlock FontSize="28" FontWeight="Bold" Text="{x:Bind lang:Lang.Starshot_Nav_Editor}" />
+
+      <!--  截图后打开编辑器  -->
+      <StackPanel Spacing="6">
+        <ToggleSwitch
+          IsOn="{x:Bind OpenEditorAfterCapture, Mode=TwoWay}"
+          OffContent="{x:Bind lang:Lang.EditorSetting_OpenAfterCapture}"
+          OnContent="{x:Bind lang:Lang.EditorSetting_OpenAfterCapture}"
+        />
+        <TextBlock
+          FontSize="12"
+          Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+          Text="{x:Bind lang:Lang.EditorSetting_OpenAfterCaptureDesc}"
+          TextWrapping="Wrap"
+        />
+      </StackPanel>
+
+      <!--  工具：启用开关 + 显示顺序（与编辑器工具栏共用同一份顺序配置）  -->
+      <StackPanel Spacing="12">
+        <TextBlock FontSize="20" Text="{x:Bind lang:Lang.EditorSetting_Tools}" />
+        <TextBlock
+          FontSize="12"
+          Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+          Text="{x:Bind lang:Lang.EditorSetting_ToolsDesc}"
+          TextWrapping="Wrap"
+        />
+        <ItemsControl ItemsSource="{x:Bind Tools}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="local:EditorToolItem">
+              <Grid Margin="0,4" ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="160" />
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <TextBlock VerticalAlignment="Center" Text="{x:Bind DisplayText}" />
+                <StackPanel
+                  Grid.Column="1"
+                  VerticalAlignment="Center"
+                  Orientation="Horizontal"
+                  Spacing="4"
+                >
+                  <Button Padding="8,4" Command="{x:Bind MoveUpCommand}" ToolTipService.ToolTip="↑">
+                    <FontIcon FontSize="12" Glyph="&#xE70E;" />
+                  </Button>
+                  <Button
+                    Padding="8,4"
+                    Command="{x:Bind MoveDownCommand}"
+                    ToolTipService.ToolTip="↓"
+                  >
+                    <FontIcon FontSize="12" Glyph="&#xE70D;" />
+                  </Button>
+                </StackPanel>
+                <ToggleSwitch
+                  Grid.Column="2"
+                  HorizontalAlignment="Right"
+                  VerticalAlignment="Center"
+                  IsOn="{x:Bind IsEnabled, Mode=TwoWay}"
+                />
+              </Grid>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </StackPanel>
+  </ScrollViewer>
+</sf:PageBase>

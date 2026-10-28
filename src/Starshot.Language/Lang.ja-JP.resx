@@ -322,6 +322,18 @@
   <data name="ScreenshotSetting_OcrEngineConfigButton" xml:space="preserve">
     <value>エンジンの設定</value>
   </data>
+  <data name="EditorSetting_OpenAfterCapture" xml:space="preserve">
+    <value>キャプチャ後にエディタを開く</value>
+  </data>
+  <data name="EditorSetting_OpenAfterCaptureDesc" xml:space="preserve">
+    <value>スクリーンショット撮影後にアノテーションエディタを自動的に開きます</value>
+  </data>
+  <data name="EditorSetting_Tools" xml:space="preserve">
+    <value>ツール</value>
+  </data>
+  <data name="EditorSetting_ToolsDesc" xml:space="preserve">
+    <value>ツールの有効化と、エディタツールバーでの表示順序を設定します</value>
+  </data>
   <data name="ScreenshotSetting_OcrEngineDesc" xml:space="preserve">
     <value>ビューアーで画像内のテキストを認識します</value>
   </data>
@@ -525,6 +537,9 @@
   </data>
   <data name="Starshot_Nav_Gallery" xml:space="preserve">
     <value>ギャラリー</value>
+  </data>
+  <data name="Starshot_Nav_Editor" xml:space="preserve">
+    <value>エディタ</value>
   </data>
   <data name="Starshot_Nav_Appearance" xml:space="preserve">
     <value>外観</value>
@@ -993,6 +1008,12 @@
   </data>
   <data name="Starshot_ScreenshotSubfolder" xml:space="preserve">
     <value>スクリーンショットをサブフォルダーに分類</value>
+  </data>
+  <data name="Starshot_OpenFolderAfterCapture" xml:space="preserve">
+    <value>キャプチャ後にフォルダを開く</value>
+  </data>
+  <data name="Starshot_OpenFolderAfterCaptureDesc" xml:space="preserve">
+    <value>キャプチャ後、エクスプローラーでスクリーンショットフォルダを開きます。エディタを開いた場合はエディタを閉じた後に開きます</value>
   </data>
   <data name="Starshot_ScreenshotSubfolderDesc" xml:space="preserve">
     <value>有効にすると、スクリーンショットは下のテンプレートで名付けられたサブフォルダーに保存されます。</value>

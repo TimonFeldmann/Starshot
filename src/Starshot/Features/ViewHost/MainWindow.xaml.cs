@@ -183,6 +183,7 @@ public sealed partial class MainWindow : WindowEx
                 "Appearance" => typeof(AppearanceSetting),
                 "Hotkey" => typeof(HotkeySetting),
                 "Screenshot" => typeof(ScreenshotSetting),
+                "Editor" => typeof(EditorSetting),
                 "Storage" => typeof(StorageSetting),
                 "Settings" => typeof(GeneralSetting),
                 "About" => typeof(AboutPage),

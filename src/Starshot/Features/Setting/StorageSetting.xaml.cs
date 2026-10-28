@@ -131,6 +131,19 @@ public sealed partial class StorageSetting : PageBase
         set => SetProperty(ref field, value);
     } = BuildSubfolderPreview(AppConfig.ScreenshotSubfolderPattern);
 
+    /// <summary>截图完成后打开截图文件夹（开了编辑器则在编辑器关闭后打开）</summary>
+    public bool OpenScreenshotFolderAfterCapture
+    {
+        get;
+        set
+        {
+            if (SetProperty(ref field, value))
+            {
+                AppConfig.OpenScreenshotFolderAfterCapture = value;
+            }
+        }
+    } = AppConfig.OpenScreenshotFolderAfterCapture;
+
     private static string BuildSubfolderPreview(string pattern)
     {
         return ScreenCaptureService.BuildFileName(

@@ -322,6 +322,18 @@
   <data name="ScreenshotSetting_OcrEngineConfigButton" xml:space="preserve">
     <value>配置引擎</value>
   </data>
+  <data name="EditorSetting_OpenAfterCapture" xml:space="preserve">
+    <value>截图后打开编辑器</value>
+  </data>
+  <data name="EditorSetting_OpenAfterCaptureDesc" xml:space="preserve">
+    <value>截图完成后自动打开标注编辑器</value>
+  </data>
+  <data name="EditorSetting_Tools" xml:space="preserve">
+    <value>工具</value>
+  </data>
+  <data name="EditorSetting_ToolsDesc" xml:space="preserve">
+    <value>启用工具，并设置其在编辑器工具栏中的显示顺序</value>
+  </data>
   <data name="ScreenshotSetting_OcrEngineDesc" xml:space="preserve">
     <value>查看器内识别图片文字</value>
   </data>
@@ -525,6 +537,9 @@
   </data>
   <data name="Starshot_Nav_Gallery" xml:space="preserve">
     <value>截图库</value>
+  </data>
+  <data name="Starshot_Nav_Editor" xml:space="preserve">
+    <value>编辑器</value>
   </data>
   <data name="Starshot_Nav_Appearance" xml:space="preserve">
     <value>外观</value>
@@ -993,6 +1008,12 @@
   </data>
   <data name="Starshot_ScreenshotSubfolder" xml:space="preserve">
     <value>按文件夹分类截图</value>
+  </data>
+  <data name="Starshot_OpenFolderAfterCapture" xml:space="preserve">
+    <value>截图后打开文件夹</value>
+  </data>
+  <data name="Starshot_OpenFolderAfterCaptureDesc" xml:space="preserve">
+    <value>截图完成后在资源管理器中打开截图文件夹；若打开了编辑器，则在编辑器关闭后打开</value>
   </data>
   <data name="Starshot_ScreenshotSubfolderDesc" xml:space="preserve">
     <value>开启后截图保存到截图目录下按下方模板命名的子文件夹。</value>

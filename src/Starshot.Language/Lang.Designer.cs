@@ -304,6 +304,42 @@ namespace Starshot.Language {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Open editor after capture.
+        /// </summary>
+        public static string EditorSetting_OpenAfterCapture {
+            get {
+                return ResourceManager.GetString("EditorSetting_OpenAfterCapture", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The markup editor opens automatically after a screenshot is taken.
+        /// </summary>
+        public static string EditorSetting_OpenAfterCaptureDesc {
+            get {
+                return ResourceManager.GetString("EditorSetting_OpenAfterCaptureDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Tools.
+        /// </summary>
+        public static string EditorSetting_Tools {
+            get {
+                return ResourceManager.GetString("EditorSetting_Tools", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enable tools and set their display order in the editor toolbar.
+        /// </summary>
+        public static string EditorSetting_ToolsDesc {
+            get {
+                return ResourceManager.GetString("EditorSetting_ToolsDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Import.
         /// </summary>
         public static string GachaImportAndExportWindow_Import {
@@ -2437,6 +2473,15 @@ namespace Starshot.Language {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Editor.
+        /// </summary>
+        public static string Starshot_Nav_Editor {
+            get {
+                return ResourceManager.GetString("Starshot_Nav_Editor", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Gallery.
         /// </summary>
         public static string Starshot_Nav_Gallery {
@@ -2487,6 +2532,24 @@ namespace Starshot.Language {
         public static string Starshot_OpenDataFolder {
             get {
                 return ResourceManager.GetString("Starshot_OpenDataFolder", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Open folder after capture.
+        /// </summary>
+        public static string Starshot_OpenFolderAfterCapture {
+            get {
+                return ResourceManager.GetString("Starshot_OpenFolderAfterCapture", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Open the screenshot folder in Explorer after a capture; when the editor is opened it opens after the editor closes.
+        /// </summary>
+        public static string Starshot_OpenFolderAfterCaptureDesc {
+            get {
+                return ResourceManager.GetString("Starshot_OpenFolderAfterCaptureDesc", resourceCulture);
             }
         }
         
