@@ -604,6 +604,12 @@
   <data name="Starshot_WallpaperFolderPreferVideoDesc" xml:space="preserve">
     <value>优先选择视频；视频无法初始化时回退到随机图片</value>
   </data>
+  <data name="Starshot_WallpaperOpacity" xml:space="preserve">
+    <value>壁纸不透明度</value>
+  </data>
+  <data name="Starshot_WallpaperOpacityDesc" xml:space="preserve">
+    <value>100% 为原图不透明，0% 只剩一层磨砂玻璃，后面的内容会被糊掉</value>
+  </data>
   <data name="Starshot_WallpaperNowPlaying" xml:space="preserve">
     <value>正在播放</value>
   </data>

@@ -92,6 +92,16 @@ public static partial class AppConfig
     }
 
     /// <summary>
+    /// 壁纸不透明度（0–100，100=原样不透明）。只改壁纸图层自身的 Opacity，不重载壁纸；
+    /// 0 时与无壁纸时的窗口底色一致，上层亚克力隔层与 UI 不受影响。
+    /// </summary>
+    public static int WallpaperOpacity
+    {
+        get => GetValue(100);
+        set => SetValue(value);
+    }
+
+    /// <summary>
     /// 启用自定义壁纸（开则关 Mica，铺壁纸 + 亚克力隔层）。模式 0=无 → false；1/2/3 看对应路径。
     /// </summary>
     public static bool EnableWallpaper

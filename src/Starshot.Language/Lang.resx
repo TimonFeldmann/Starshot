@@ -607,6 +607,12 @@
   <data name="Starshot_WallpaperFolderPreferVideoDesc" xml:space="preserve">
     <value>Picks videos first; falls back to a random image if the video can't initialize</value>
   </data>
+  <data name="Starshot_WallpaperOpacity" xml:space="preserve">
+    <value>Wallpaper opacity</value>
+  </data>
+  <data name="Starshot_WallpaperOpacityDesc" xml:space="preserve">
+    <value>100% keeps the wallpaper as-is; 0% leaves a frosted glass layer that blurs whatever is behind the window</value>
+  </data>
   <data name="Starshot_WallpaperNowPlaying" xml:space="preserve">
     <value>NowPlaying</value>
   </data>

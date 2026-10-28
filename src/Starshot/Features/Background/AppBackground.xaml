@@ -10,6 +10,7 @@
   <Image
     x:Name="Image_Background"
     HorizontalAlignment="Stretch"
+    Opacity="{x:Bind BackgroundOpacity, Mode=OneWay}"
     VerticalAlignment="Stretch"
     Source="{x:Bind BackgroundImageSource, Mode=OneWay}"
     Stretch="UniformToFill"

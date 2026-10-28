@@ -604,6 +604,12 @@
   <data name="Starshot_WallpaperFolderPreferVideoDesc" xml:space="preserve">
     <value>動画を優先して選択；動画を初期化できない場合はランダムな画像に切り替えます</value>
   </data>
+  <data name="Starshot_WallpaperOpacity" xml:space="preserve">
+    <value>壁紙の不透明度</value>
+  </data>
+  <data name="Starshot_WallpaperOpacityDesc" xml:space="preserve">
+    <value>100% で元の画像のまま、0% ではすりガラスの層だけが残り、後ろの内容はぼやけます</value>
+  </data>
   <data name="Starshot_WallpaperNowPlaying" xml:space="preserve">
     <value>再生中</value>
   </data>

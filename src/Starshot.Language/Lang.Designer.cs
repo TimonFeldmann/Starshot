@@ -3049,6 +3049,24 @@ namespace Starshot.Language {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Wallpaper opacity.
+        /// </summary>
+        public static string Starshot_WallpaperOpacity {
+            get {
+                return ResourceManager.GetString("Starshot_WallpaperOpacity", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 100% keeps the wallpaper as-is; 0% leaves a frosted glass layer that blurs whatever is behind the window.
+        /// </summary>
+        public static string Starshot_WallpaperOpacityDesc {
+            get {
+                return ResourceManager.GetString("Starshot_WallpaperOpacityDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to No video in folder, picked a random image instead.
         /// </summary>
         public static string Starshot_WallpaperVideoFallbackToImage {

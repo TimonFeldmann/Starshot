@@ -81,6 +81,38 @@
             </Grid>
           </Button>
         </Grid>
+        <StackPanel Margin="0,4,0,0" Spacing="4" Visibility="{x:Bind WallpaperRowVisibility}">
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock
+              VerticalAlignment="Center"
+              Text="{x:Bind lang:Lang.Starshot_WallpaperOpacity}"
+            />
+            <TextBlock
+              Grid.Column="1"
+              MinWidth="44"
+              HorizontalAlignment="Right"
+              VerticalAlignment="Center"
+              Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+              Text="{x:Bind WallpaperOpacityDisplay, Mode=OneWay}"
+            />
+          </Grid>
+          <Slider
+            Maximum="100"
+            Minimum="0"
+            StepFrequency="1"
+            Value="{x:Bind WallpaperOpacity, Mode=TwoWay}"
+          />
+          <TextBlock
+            FontSize="12"
+            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+            Text="{x:Bind lang:Lang.Starshot_WallpaperOpacityDesc}"
+            TextWrapping="Wrap"
+          />
+        </StackPanel>
         <ToggleSwitch
           IsOn="{x:Bind WallpaperFolderPreferVideo, Mode=TwoWay}"
           Visibility="{x:Bind WallpaperFolderPreferVideoVisibility}"

@@ -158,6 +158,29 @@ public sealed partial class AppearanceSetting : PageBase
         }
     } = AppConfig.WallpaperMode;
 
+    /// <summary>
+    /// 滑条是 double，配置里存 0–100 整数；StepFrequency=1 保证取值已是整数。
+    /// 只发消息改图层 Opacity，不重载壁纸——拖动时才顺。
+    /// </summary>
+    public double WallpaperOpacity
+    {
+        get;
+        set
+        {
+            if (SetProperty(ref field, value))
+            {
+                int percent = (int)Math.Round(Math.Clamp(value, 0, 100));
+                AppConfig.WallpaperOpacity = percent;
+                OnPropertyChanged(nameof(WallpaperOpacityDisplay));
+                WeakReferenceMessenger.Default.Send(
+                    new WallpaperOpacityChangedMessage { Opacity = percent }
+                );
+            }
+        }
+    } = AppConfig.WallpaperOpacity;
+
+    public string WallpaperOpacityDisplay => $"{(int)Math.Round(WallpaperOpacity)}%";
+
     public string WallpaperChooseLabel =>
         AppConfig.WallpaperMode switch
         {
