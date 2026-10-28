@@ -42,6 +42,9 @@ public sealed partial class MainWindow : WindowEx
 
     private Brush? _overlayAcrylicBrush; // 首次 ApplyBackdrop 时捕获 XAML 设的亚克力（用于亚克力开关还原）
 
+    // 上一次 ApplyBackdrop 时壁纸层是否视同不存在（不透明度 0）；滑条只在跨过这条边界时才需要重算 backdrop
+    private bool _wallpaperLayerHidden;
+
     private static readonly Brush _transparentBrush = new SolidColorBrush(
         Color.FromArgb(0, 0, 0, 0)
     );
@@ -69,6 +72,18 @@ public sealed partial class MainWindow : WindowEx
         WeakReferenceMessenger.Default.Register<BackgroundChangedMessage>(
             this,
             (_, _) => ApplyBackdrop()
+        );
+        WeakReferenceMessenger.Default.Register<WallpaperOpacityChangedMessage>(
+            this,
+            (_, _) =>
+            {
+                // 中间值只改图片自身透明度，backdrop 不用动；只有「壁纸层视同不存在」这条边界翻转时才重算，
+                // 免得拖动滑条时每一帧都重建一次 Mica
+                if (IsWallpaperLayerHidden() != _wallpaperLayerHidden)
+                {
+                    ApplyBackdrop();
+                }
+            }
         );
         Activated += MainWindow_Activated;
         AppWindow.Closing += AppWindow_Closing;
@@ -129,11 +144,14 @@ public sealed partial class MainWindow : WindowEx
     /// <summary>
     /// 壁纸开：关 Mica + overlay 隔层显（亚克力开=磨砂，关=透明让壁纸直接透出）；壁纸关：Mica + overlay 隐。
     /// 壁纸渲染本身由 AppBackground 据 EnableWallpaper 自管。
+    /// 不透明度 0 是另一种状态：图片看不见了，此时整扇窗走系统亚克力磨砂，后面的桌面与窗口被糊成一片。
     /// </summary>
     public void ApplyBackdrop()
     {
-        if (AppConfig.EnableWallpaper)
+        _wallpaperLayerHidden = IsWallpaperLayerHidden();
+        if (!_wallpaperLayerHidden)
         {
+            SystemBackdrop = null;
             _backdropHelper?.ResetBackdrop();
             _overlayAcrylicBrush ??= Border_OverlayMask.Background; // 首次捕获 XAML 亚克力
             Border_OverlayMask.Background = AppConfig.EnableAcrylic
@@ -141,13 +159,30 @@ public sealed partial class MainWindow : WindowEx
                 : _transparentBrush;
             Border_OverlayMask.Opacity = 1;
         }
+        else if (AppConfig.EnableWallpaper)
+        {
+            // 壁纸拖着但被打到 0：图片完全看不见了，此时整扇窗换成系统亚克力（磨砂玻璃）。
+            // 后面有什么会被糊成一片、只剩轮廓，比纯透底（后面的文字直接压在界面上）好读。
+            SystemBackdrop = null;
+            _backdropHelper ??= new SystemBackdropHelper(this);
+            _backdropHelper.TrySetAcrylic();
+            Border_OverlayMask.Opacity = 0;
+        }
         else
         {
+            SystemBackdrop = null;
             _backdropHelper ??= new SystemBackdropHelper(this);
             _backdropHelper.TrySetMica();
             Border_OverlayMask.Opacity = 0;
         }
     }
+
+    /// <summary>
+    /// 壁纸图层是否视同不存在：没开壁纸，或壁纸不透明度拉到 0（图片完全透明，什么都看不见）。
+    /// 两种情况 backdrop 处理不同——没开壁纸走 Mica，开着但为 0 走亚克力磨砂。
+    /// </summary>
+    private static bool IsWallpaperLayerHidden() =>
+        !AppConfig.EnableWallpaper || AppConfig.WallpaperOpacity <= 0;
 
     private void MainWindow_Activated(object sender, WindowActivatedEventArgs e)
     {

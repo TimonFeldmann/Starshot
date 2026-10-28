@@ -43,6 +43,16 @@ public sealed partial class AppBackground : UserControl
         set => SetProperty(ref field, value);
     }
 
+    /// <summary>
+    /// 壁纸图层不透明度（0–1）。图片与视频共用同一个 Image，所以两种模式一起生效；
+    /// 改它只动 Opacity，不重新加载壁纸。
+    /// </summary>
+    public double BackgroundOpacity
+    {
+        get;
+        set => SetProperty(ref field, value);
+    } = AppConfig.WallpaperOpacity / 100d;
+
     private string? _lastFile;
     private CancellationTokenSource? _cts;
 
@@ -90,6 +100,10 @@ public sealed partial class AppBackground : UserControl
         WeakReferenceMessenger.Default.Register<AccentRefreshRequestedMessage>(
             this,
             (_, _) => _ = RefreshAccentAsync()
+        );
+        WeakReferenceMessenger.Default.Register<WallpaperOpacityChangedMessage>(
+            this,
+            static (r, m) => ((AppBackground)r).BackgroundOpacity = m.Opacity / 100d
         );
         WeakReferenceMessenger.Default.Register<MainWindowStateChangedMessage>(
             this,

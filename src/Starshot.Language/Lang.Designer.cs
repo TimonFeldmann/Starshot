@@ -1,4 +1,4 @@
-﻿namespace Starshot.Language {
+namespace Starshot.Language {
     using System;
     
     
@@ -2618,6 +2618,24 @@
         public static string Starshot_WallpaperNowPlaying {
             get {
                 return ResourceManager.GetString("Starshot_WallpaperNowPlaying", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Wallpaper opacity 的本地化字符串。
+        /// </summary>
+        public static string Starshot_WallpaperOpacity {
+            get {
+                return ResourceManager.GetString("Starshot_WallpaperOpacity", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 100% keeps the wallpaper as-is; 0% fades it into the window background 的本地化字符串。
+        /// </summary>
+        public static string Starshot_WallpaperOpacityDesc {
+            get {
+                return ResourceManager.GetString("Starshot_WallpaperOpacityDesc", resourceCulture);
             }
         }
         
