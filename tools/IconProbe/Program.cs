@@ -19,8 +19,7 @@ using Windows.UI;
 internal static class Program
 {
     private static readonly CanvasDevice Device = CanvasDevice.GetSharedDevice();
-    private static readonly DirectXPixelFormat Fmt =
-        DirectXPixelFormat.R8G8B8A8UIntNormalized;
+    private static readonly DirectXPixelFormat Fmt = DirectXPixelFormat.R8G8B8A8UIntNormalized;
 
     // ---- 图标 path data（16x16 网格，与 ScreenshotEditWindow.xaml 同源；仅用 M/L/H/V/Z，避开本 Win2D 损坏的 Q 段/填充）----
     private const string BlurSquareData =
@@ -29,8 +28,7 @@ internal static class Program
         "M12.1,2.1 L13.9,3.9 L8.9,8.9 L6.6,11.6 L4.4,9.4 L7.1,7.1 Z M7.1,7.1 L8.9,8.9";
     private const string HighlightSwipeData = "M3.2,13 L7.2,13";
     private const string EraseHeadData = "M2.6,10 L5.1,7.5 L8.5,10.9 L6,13.4 Z";
-    private const string EraseBodyData =
-        "M2.6,10 L10,2.6 L13.4,6 L6,13.4 Z M5.1,7.5 L8.5,10.9";
+    private const string EraseBodyData = "M2.6,10 L10,2.6 L13.4,6 L6,13.4 Z M5.1,7.5 L8.5,10.9";
     private const string SelectArrowData = "M2.4,2.5 L7,14 L8.4,9.4 L13,8 Z";
 
     private static int Main()
@@ -250,7 +248,10 @@ internal static class Program
                         builder.AddLine(ScaleVec(seg.P1, scale));
                         break;
                     case 1:
-                        builder.AddQuadraticBezier(ScaleVec(seg.P1, scale), ScaleVec(seg.P2, scale));
+                        builder.AddQuadraticBezier(
+                            ScaleVec(seg.P1, scale),
+                            ScaleVec(seg.P2, scale)
+                        );
                         break;
                     case 2:
                         builder.AddCubicBezier(
@@ -343,12 +344,7 @@ internal static class Program
                         SkipSep(data, ref i);
                         float y = Num(data, ref i);
                         segs.Add(
-                            new Seg(
-                                1,
-                                new Vector2(c1x, c1y),
-                                new Vector2(x, y),
-                                Vector2.Zero
-                            )
+                            new Seg(1, new Vector2(c1x, c1y), new Vector2(x, y), Vector2.Zero)
                         );
                         prev = new Vector2(x, y);
                         break;
@@ -384,7 +380,7 @@ internal static class Program
                     }
                 }
             }
-        figureEnd:
+            figureEnd:
             yield return (new Vector2(mx, my), closed, segs);
         }
     }

@@ -159,9 +159,7 @@ public abstract partial class WindowEx : Window
             && AppWindow.TitleBar.ExtendsContentIntoTitleBar == true
         )
         {
-            AppWindow.TitleBar.SetDragRectangles(
-                new[] { new RectInt32(0, 0, 100000, heightPx) }
-            );
+            AppWindow.TitleBar.SetDragRectangles(new[] { new RectInt32(0, 0, 100000, heightPx) });
         }
     }
 

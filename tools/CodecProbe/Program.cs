@@ -53,7 +53,9 @@ static class RoundTripProbe
             using var img = decoder.GetNthImage(0);
             ReadOnlySpan<byte> xm = img.GetXMPMetadata();
             string xmpText = Encoding.UTF8.GetString(xm);
-            Console.WriteLine($"[dec] XMP: {xmpText.Length} bytes, has ss:Markup = {xmpText.Contains("ss:Markup")}");
+            Console.WriteLine(
+                $"[dec] XMP: {xmpText.Length} bytes, has ss:Markup = {xmpText.Contains("ss:Markup")}"
+            );
             using var outRgb = img.ToRGBImage(d, avifRGBFormat.RGBA);
             byte[] px = outRgb.GetPixelBytes().ToArray();
             Console.WriteLine(

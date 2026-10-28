@@ -499,10 +499,9 @@ public sealed partial class ScreenshotPage : PageBase
                 var decoded = ScreenshotMarkupCodec.Decode(imageInfo.XmpData);
                 IReadOnlyList<ScreenshotOp>? ops = decoded?.Ops;
                 string? srcName = decoded?.SourceFileName;
-                string? originalPath =
-                    ops is not null
-                        ? ResolveOriginalImagePath(item.FilePath, srcName)
-                        : null;
+                string? originalPath = ops is not null
+                    ? ResolveOriginalImagePath(item.FilePath, srcName)
+                    : null;
 
                 if (ops is not null && originalPath is not null && File.Exists(originalPath))
                 {
@@ -574,12 +573,7 @@ public sealed partial class ScreenshotPage : PageBase
         {
             foreach (string file in Directory.EnumerateFiles(folder, baseName + ".*"))
             {
-                if (
-                    Path.GetFileName(file).EndsWith(
-                        "-marked",
-                        StringComparison.OrdinalIgnoreCase
-                    )
-                )
+                if (Path.GetFileName(file).EndsWith("-marked", StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }

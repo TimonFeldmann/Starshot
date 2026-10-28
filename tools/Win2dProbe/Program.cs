@@ -50,7 +50,8 @@ internal static class Program
     {
         byte[] px = rt.GetPixelBytes();
         int count = 0;
-        int fx = -1, fy = -1;
+        int fx = -1,
+            fy = -1;
         for (int y = Math.Max(0, yMin); y < 200; y++)
         {
             for (int x = 0; x < 200; x++)
@@ -175,11 +176,7 @@ internal static class Program
             "X4 blur2 1arg",
             (ds, img) =>
             {
-                var blur = new GaussianBlurEffect
-                {
-                    Source = img,
-                    BlurAmount = 2f,
-                };
+                var blur = new GaussianBlurEffect { Source = img, BlurAmount = 2f };
                 ds.DrawImage(blur);
             },
             baseImg,
@@ -212,11 +209,7 @@ internal static class Program
                     Source = img,
                     SourceRectangle = new Rect(150, 50, 1, 1),
                 };
-                var patch = new ScaleEffect
-                {
-                    Source = crop,
-                    Scale = new Vector2(60, 60),
-                };
+                var patch = new ScaleEffect { Source = crop, Scale = new Vector2(60, 60) };
                 ds.DrawImage(patch, 20f, 120f, new Rect(0, 0, 60, 60));
             },
             baseImg,
@@ -233,11 +226,7 @@ internal static class Program
                     Source = img,
                     SourceRectangle = new Rect(150, 50, 1, 1),
                 };
-                var patch = new ScaleEffect
-                {
-                    Source = crop,
-                    Scale = new Vector2(60, 60),
-                };
+                var patch = new ScaleEffect { Source = crop, Scale = new Vector2(60, 60) };
                 ds.DrawImage(patch, 20f, 120f);
             },
             baseImg,
@@ -270,11 +259,7 @@ internal static class Program
                     Source = img,
                     SourceRectangle = new Rect(148, 48, 4, 4),
                 };
-                var patch = new ScaleEffect
-                {
-                    Source = crop,
-                    Scale = new Vector2(60, 60),
-                };
+                var patch = new ScaleEffect { Source = crop, Scale = new Vector2(60, 60) };
                 ds.DrawImage(patch, 20f, 120f, new Rect(0, 0, 60, 60));
             },
             baseImg,

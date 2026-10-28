@@ -958,8 +958,7 @@ internal class ScreenCaptureService
             {
                 baseName = baseName[..^"-marked".Length];
             }
-            string originalExt = Path
-                .GetExtension(ctx.SourceFilePath)
+            string originalExt = Path.GetExtension(ctx.SourceFilePath)
                 .TrimStart('.')
                 .ToLowerInvariant();
             extension = originalExt is "png" or "avif" or "jxl"
@@ -983,13 +982,12 @@ internal class ScreenCaptureService
             );
 
             // 标注结果是 8 位 SDR，走 SDR 格式
-            extension =
-                AppConfig.ScreenCaptureSDRFormat switch
-                {
-                    1 => "avif",
-                    2 => "jxl",
-                    _ => "png",
-                };
+            extension = AppConfig.ScreenCaptureSDRFormat switch
+            {
+                1 => "avif",
+                2 => "jxl",
+                _ => "png",
+            };
             baseName = BuildFileName(
                 ctx.ProcessName,
                 ctx.ProcessExeName,
@@ -1015,18 +1013,13 @@ internal class ScreenCaptureService
             _ => 1,
         };
 
-        string filePath = EnsureUniquePath(
-            Path.Combine(folder, $"{baseName}-marked.{extension}")
-        );
+        string filePath = EnsureUniquePath(Path.Combine(folder, $"{baseName}-marked.{extension}"));
 
         // 元素列表 + 底图（原图）文件名嵌入 XMP：重新打开编辑器时可恢复元素、
         // 并在原图上重放（原图缺失时 ResolveOriginalFileName 返回 null，只存元素）
         xmpData ??= BuildXMPMetadata(
             ctx.FrameTime,
-            ScreenshotMarkupCodec.Encode(
-                ops,
-                ResolveOriginalFileName(folder, baseName, extension)
-            )
+            ScreenshotMarkupCodec.Encode(ops, ResolveOriginalFileName(folder, baseName, extension))
         );
 
         using MemoryStream ms = new();
@@ -1424,12 +1417,7 @@ internal class ScreenCaptureService
         {
             foreach (string file in Directory.EnumerateFiles(folder, baseName + ".*"))
             {
-                if (
-                    Path.GetFileName(file).EndsWith(
-                        "-marked",
-                        StringComparison.OrdinalIgnoreCase
-                    )
-                )
+                if (Path.GetFileName(file).EndsWith("-marked", StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
