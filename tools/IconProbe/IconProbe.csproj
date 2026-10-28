@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <SelfContained>false</SelfContained>
+    <!-- 与 Win2dProbe 同款：非打包控制台 + WinAppSDK 解包配置 -->
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Starward.Win2D" Version="1.3.2-release.1" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260529003" />
+  </ItemGroup>
+</Project>

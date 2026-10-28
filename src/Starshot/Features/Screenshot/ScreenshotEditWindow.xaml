@@ -32,7 +32,22 @@
         Padding="8,4"
         ToolTipService.ToolTip="{x:Bind lang:Lang.ScreenshotEditWindow_Blur}"
       >
-        <FontIcon FontSize="16" Glyph="&#xE8B7;" />
+        <!--  模糊：软边方（中心较实、边缘淡出 = “模糊”隐喻；中性灰在深浅两种主题下均可读）  -->
+        <Path Width="16" Height="16">
+          <Path.Data>M5.5,2 L10.5,2 L14,5.5 L14,10.5 L10.5,14 L5.5,14 L2,10.5 L2,5.5 Z</Path.Data>
+          <Path.Fill>
+            <RadialGradientBrush
+              Center="0.5,0.5"
+              GradientOrigin="0.5,0.5"
+              RadiusX="0.8"
+              RadiusY="0.8"
+            >
+              <GradientStop Color="#F0808080" Offset="0" />
+              <GradientStop Color="#99808080" Offset="0.7" />
+              <GradientStop Color="#00808080" Offset="1" />
+            </RadialGradientBrush>
+          </Path.Fill>
+        </Path>
       </ToggleButton>
       <ToggleButton
         x:Name="ToggleButton_Highlight"
@@ -41,7 +56,20 @@
         Padding="8,4"
         ToolTipService.ToolTip="{x:Bind lang:Lang.ScreenshotEditWindow_Highlight}"
       >
-        <FontIcon FontSize="16" Glyph="&#xE790;" />
+        <!--  高亮：斜置马克笔（笔杆 + 斜切笔头）+ 下方一道高光笔触  -->
+        <Grid Width="16" Height="16">
+          <Path
+            Stroke="{ThemeResource TextFillColorPrimaryBrush}"
+            StrokeThickness="1.5"
+            StrokeLineJoin="Round"
+            Data="M12.1,2.1 L13.9,3.9 L8.9,8.9 L6.6,11.6 L4.4,9.4 L7.1,7.1 Z M7.1,7.1 L8.9,8.9" />
+          <Path
+            Stroke="{ThemeResource TextFillColorPrimaryBrush}"
+            StrokeThickness="2"
+            StrokeStartLineCap="Round"
+            StrokeEndLineCap="Round"
+            Data="M3.2,13 L7.2,13" />
+        </Grid>
       </ToggleButton>
       <ToggleButton
         x:Name="ToggleButton_Brush"
@@ -59,7 +87,17 @@
         Padding="8,4"
         ToolTipService.ToolTip="{x:Bind lang:Lang.ScreenshotEditWindow_Erase}"
       >
-        <FontIcon FontSize="16" Glyph="&#xE7AD;" />
+        <!--  擦除：斜置橡皮（下端灰色为擦头，分界线下为擦头区）  -->
+        <Grid Width="16" Height="16">
+          <Path
+            Fill="{ThemeResource TextFillColorSecondaryBrush}"
+            Data="M2.6,10 L5.1,7.5 L8.5,10.9 L6,13.4 Z" />
+          <Path
+            Stroke="{ThemeResource TextFillColorPrimaryBrush}"
+            StrokeThickness="1.5"
+            StrokeLineJoin="Round"
+            Data="M2.6,10 L10,2.6 L13.4,6 L6,13.4 Z M5.1,7.5 L8.5,10.9" />
+        </Grid>
       </ToggleButton>
       <ToggleButton
         x:Name="ToggleButton_Select"
@@ -68,7 +106,15 @@
         Padding="8,4"
         ToolTipService.ToolTip="{x:Bind lang:Lang.ScreenshotEditWindow_Select}"
       >
-        <FontIcon FontSize="16" Glyph="&#xE76D;" />
+        <!--  选择：经典指针箭头（实心 + 细描边圆角）  -->
+        <Path
+          Width="16"
+          Height="16"
+          Fill="{ThemeResource TextFillColorPrimaryBrush}"
+          Stroke="{ThemeResource TextFillColorPrimaryBrush}"
+          StrokeThickness="1"
+          StrokeLineJoin="Round"
+          Data="M2.4,2.5 L7,14 L8.4,9.4 L13,8 Z" />
       </ToggleButton>
 
       <Button
