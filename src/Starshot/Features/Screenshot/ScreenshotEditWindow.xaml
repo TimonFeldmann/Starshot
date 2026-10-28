@@ -18,144 +18,331 @@
       <RowDefinition Height="Auto" />
     </Grid.RowDefinitions>
 
-    <!--  工具栏：按钮 + 内联工具选项（模糊强度 / 颜色与粗细），占一行不压缩图像  -->
-    <StackPanel Grid.Row="0" Padding="8,6" Orientation="Horizontal" Spacing="6">
-      <!--  工具按钮组：支持拖拽换序（透明指针覆盖层统一拦截，实时换位，释放时持久化到配置）  -->
-      <Grid>
-        <StackPanel x:Name="Panel_ToolButtons" Orientation="Horizontal" Spacing="6">
-          <ToggleButton
-            x:Name="ToggleButton_Blur"
-            Click="ToolButton_Click"
-            Margin="2,0"
-            Padding="8,4"
-            ToolTipService.ToolTip="{x:Bind lang:Lang.ScreenshotEditWindow_Blur}"
-          >
-            <!--  模糊：软边方（中心较实、边缘淡出 = “模糊”隐喻；中性灰在深浅两种主题下均可读）  -->
-            <Path Width="16" Height="16">
-              <Path.Data>
-                M5.5,2 L10.5,2 L14,5.5 L14,10.5 L10.5,14 L5.5,14 L2,10.5 L2,5.5 Z
-              </Path.Data>
-              <Path.Fill>
-                <RadialGradientBrush
-                  Center="0.5,0.5"
-                  GradientOrigin="0.5,0.5"
-                  RadiusX="0.8"
-                  RadiusY="0.8"
-                >
-                  <GradientStop Color="#F0808080" Offset="0" />
-                  <GradientStop Color="#99808080" Offset="0.7" />
-                  <GradientStop Color="#00808080" Offset="1" />
-                </RadialGradientBrush>
-              </Path.Fill>
-            </Path>
-          </ToggleButton>
-          <ToggleButton
-            x:Name="ToggleButton_Highlight"
-            Click="ToolButton_Click"
-            Margin="2,0"
-            Padding="8,4"
-            ToolTipService.ToolTip="{x:Bind lang:Lang.ScreenshotEditWindow_Highlight}"
-          >
-            <!--  高亮：斜置马克笔（笔杆 + 斜切笔头）+ 下方一道高光笔触  -->
-            <Grid Width="16" Height="16">
+    <!--  工具栏：按钮 + 内联工具选项（模糊强度 / 颜色与粗细），占一行不压缩图像。
+          左组 = 工具按钮 + 内联选项；动作组 = 撤销/清空/保存/关闭，居中独立成组  -->
+    <Grid Grid.Row="0" Padding="8,6">
+      <StackPanel Orientation="Horizontal" Spacing="6">
+        <!--  工具按钮组：支持拖拽换序（透明指针覆盖层统一拦截，实时换位，释放时持久化到配置）  -->
+        <Grid>
+          <StackPanel x:Name="Panel_ToolButtons" Orientation="Horizontal" Spacing="6">
+            <ToggleButton
+              x:Name="ToggleButton_Blur"
+              Click="ToolButton_Click"
+              Margin="2,0"
+              Padding="8,4"
+              ToolTipService.ToolTip="{x:Bind lang:Lang.ScreenshotEditWindow_Blur}"
+            >
+              <!--  模糊：软边方（中心较实、边缘淡出 = “模糊”隐喻；中性灰在深浅两种主题下均可读）  -->
+              <Path Width="16" Height="16">
+                <Path.Data>
+                  M5.5,2 L10.5,2 L14,5.5 L14,10.5 L10.5,14 L5.5,14 L2,10.5 L2,5.5 Z
+                </Path.Data>
+                <Path.Fill>
+                  <RadialGradientBrush
+                    Center="0.5,0.5"
+                    GradientOrigin="0.5,0.5"
+                    RadiusX="0.8"
+                    RadiusY="0.8"
+                  >
+                    <GradientStop Color="#F0808080" Offset="0" />
+                    <GradientStop Color="#99808080" Offset="0.7" />
+                    <GradientStop Color="#00808080" Offset="1" />
+                  </RadialGradientBrush>
+                </Path.Fill>
+              </Path>
+            </ToggleButton>
+            <ToggleButton
+              x:Name="ToggleButton_Highlight"
+              Click="ToolButton_Click"
+              Margin="2,0"
+              Padding="8,4"
+              ToolTipService.ToolTip="{x:Bind lang:Lang.ScreenshotEditWindow_Highlight}"
+            >
+              <!--  高亮：斜置马克笔（笔杆 + 斜切笔头）+ 下方一道高光笔触  -->
+              <Grid Width="16" Height="16">
+                <Path
+                  Stroke="{ThemeResource TextFillColorPrimaryBrush}"
+                  StrokeThickness="1.5"
+                  StrokeLineJoin="Round"
+                  Data="M12.1,2.1 L13.9,3.9 L8.9,8.9 L6.6,11.6 L4.4,9.4 L7.1,7.1 Z M7.1,7.1 L8.9,8.9"
+                />
+                <Path
+                  Stroke="{ThemeResource TextFillColorPrimaryBrush}"
+                  StrokeThickness="2"
+                  StrokeStartLineCap="Round"
+                  StrokeEndLineCap="Round"
+                  Data="M3.2,13 L7.2,13"
+                />
+              </Grid>
+            </ToggleButton>
+            <ToggleButton
+              x:Name="ToggleButton_Brush"
+              Click="ToolButton_Click"
+              Margin="2,0"
+              Padding="8,4"
+              ToolTipService.ToolTip="{x:Bind lang:Lang.ScreenshotEditWindow_Brush}"
+            >
+              <FontIcon FontSize="16" Glyph="&#xE70F;" />
+            </ToggleButton>
+            <ToggleButton
+              x:Name="ToggleButton_Shapes"
+              Click="ToolButton_Click"
+              Margin="2,0"
+              Padding="8,4"
+              ToolTipService.ToolTip="{x:Bind lang:Lang.ScreenshotEditWindow_Shapes}"
+            >
+              <!--  形状：箭头（左下，指向右上）+ 圆轮廓（右上）  -->
+              <Grid Width="16" Height="16">
+                <Ellipse
+                  Width="7"
+                  Height="7"
+                  Stroke="{ThemeResource TextFillColorPrimaryBrush}"
+                  StrokeThickness="1.5"
+                  HorizontalAlignment="Right"
+                  VerticalAlignment="Top"
+                  Margin="0,1,1,0"
+                />
+                <Path
+                  Stroke="{ThemeResource TextFillColorPrimaryBrush}"
+                  StrokeThickness="1.5"
+                  StrokeStartLineCap="Round"
+                  StrokeEndLineCap="Round"
+                  StrokeLineJoin="Round"
+                  Data="M2.5,13.5 L10.5,5.5 M10.5,5.5 L6.8,5.5 M10.5,5.5 L10.5,9.2"
+                />
+              </Grid>
+            </ToggleButton>
+            <ToggleButton
+              x:Name="ToggleButton_Erase"
+              Click="ToolButton_Click"
+              Margin="2,0"
+              Padding="8,4"
+              ToolTipService.ToolTip="{x:Bind lang:Lang.ScreenshotEditWindow_Erase}"
+            >
+              <!--  擦除：斜置橡皮（下端灰色为擦头，分界线下为擦头区）  -->
+              <Grid Width="16" Height="16">
+                <Path
+                  Fill="{ThemeResource TextFillColorSecondaryBrush}"
+                  Data="M2.6,10 L5.1,7.5 L8.5,10.9 L6,13.4 Z"
+                />
+                <Path
+                  Stroke="{ThemeResource TextFillColorPrimaryBrush}"
+                  StrokeThickness="1.5"
+                  StrokeLineJoin="Round"
+                  Data="M2.6,10 L10,2.6 L13.4,6 L6,13.4 Z M5.1,7.5 L8.5,10.9"
+                />
+              </Grid>
+            </ToggleButton>
+            <ToggleButton
+              x:Name="ToggleButton_Select"
+              Click="ToolButton_Click"
+              Margin="2,0"
+              Padding="8,4"
+              ToolTipService.ToolTip="{x:Bind lang:Lang.ScreenshotEditWindow_Select}"
+            >
+              <!--  选择：经典指针箭头（实心 + 细描边圆角）  -->
               <Path
+                Width="16"
+                Height="16"
+                Fill="{ThemeResource TextFillColorPrimaryBrush}"
                 Stroke="{ThemeResource TextFillColorPrimaryBrush}"
-                StrokeThickness="1.5"
+                StrokeThickness="1"
                 StrokeLineJoin="Round"
-                Data="M12.1,2.1 L13.9,3.9 L8.9,8.9 L6.6,11.6 L4.4,9.4 L7.1,7.1 Z M7.1,7.1 L8.9,8.9"
+                Data="M2.4,2.5 L7,14 L8.4,9.4 L13,8 Z"
               />
-              <Path
-                Stroke="{ThemeResource TextFillColorPrimaryBrush}"
-                StrokeThickness="2"
-                StrokeStartLineCap="Round"
-                StrokeEndLineCap="Round"
-                Data="M3.2,13 L7.2,13"
-              />
-            </Grid>
-          </ToggleButton>
-          <ToggleButton
-            x:Name="ToggleButton_Brush"
-            Click="ToolButton_Click"
-            Margin="2,0"
-            Padding="8,4"
-            ToolTipService.ToolTip="{x:Bind lang:Lang.ScreenshotEditWindow_Brush}"
-          >
-            <FontIcon FontSize="16" Glyph="&#xE70F;" />
-          </ToggleButton>
-          <ToggleButton
-            x:Name="ToggleButton_Shapes"
-            Click="ToolButton_Click"
-            Margin="2,0"
-            Padding="8,4"
-            ToolTipService.ToolTip="{x:Bind lang:Lang.ScreenshotEditWindow_Shapes}"
-          >
-            <!--  形状：箭头（左下，指向右上）+ 圆轮廓（右上）  -->
-            <Grid Width="16" Height="16">
-              <Ellipse
-                Width="7"
-                Height="7"
-                Stroke="{ThemeResource TextFillColorPrimaryBrush}"
-                StrokeThickness="1.5"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Top"
-                Margin="0,1,1,0"
-              />
-              <Path
-                Stroke="{ThemeResource TextFillColorPrimaryBrush}"
-                StrokeThickness="1.5"
-                StrokeStartLineCap="Round"
-                StrokeEndLineCap="Round"
-                StrokeLineJoin="Round"
-                Data="M2.5,13.5 L10.5,5.5 M10.5,5.5 L6.8,5.5 M10.5,5.5 L10.5,9.2"
-              />
-            </Grid>
-          </ToggleButton>
-          <ToggleButton
-            x:Name="ToggleButton_Erase"
-            Click="ToolButton_Click"
-            Margin="2,0"
-            Padding="8,4"
-            ToolTipService.ToolTip="{x:Bind lang:Lang.ScreenshotEditWindow_Erase}"
-          >
-            <!--  擦除：斜置橡皮（下端灰色为擦头，分界线下为擦头区）  -->
-            <Grid Width="16" Height="16">
-              <Path
-                Fill="{ThemeResource TextFillColorSecondaryBrush}"
-                Data="M2.6,10 L5.1,7.5 L8.5,10.9 L6,13.4 Z"
-              />
-              <Path
-                Stroke="{ThemeResource TextFillColorPrimaryBrush}"
-                StrokeThickness="1.5"
-                StrokeLineJoin="Round"
-                Data="M2.6,10 L10,2.6 L13.4,6 L6,13.4 Z M5.1,7.5 L8.5,10.9"
-              />
-            </Grid>
-          </ToggleButton>
-          <ToggleButton
-            x:Name="ToggleButton_Select"
-            Click="ToolButton_Click"
-            Margin="2,0"
-            Padding="8,4"
-            ToolTipService.ToolTip="{x:Bind lang:Lang.ScreenshotEditWindow_Select}"
-          >
-            <!--  选择：经典指针箭头（实心 + 细描边圆角）  -->
-            <Path
-              Width="16"
-              Height="16"
-              Fill="{ThemeResource TextFillColorPrimaryBrush}"
-              Stroke="{ThemeResource TextFillColorPrimaryBrush}"
-              StrokeThickness="1"
-              StrokeLineJoin="Round"
-              Data="M2.4,2.5 L7,14 L8.4,9.4 L13,8 Z"
-            />
-          </ToggleButton>
-        </StackPanel>
-        <!--  指针覆盖层：ToggleButton 在隧道阶段吞掉左键按下（内部点击态），按钮级/根级事件
+            </ToggleButton>
+          </StackPanel>
+          <!--  指针覆盖层：ToggleButton 在隧道阶段吞掉左键按下（内部点击态），按钮级/根级事件
             都收不到左键事件；用普通 Grid 覆盖层统一接管指针：左键按住拖拽换序，
             简单点击在释放时透传给对应按钮  -->
-        <Grid x:Name="Overlay_ToolDrag" Background="Transparent" />
-      </Grid>
-      <StackPanel Orientation="Horizontal" Spacing="6">
+          <Grid x:Name="Overlay_ToolDrag" Background="Transparent" />
+        </Grid>
+
+        <Border
+          Width="1"
+          Margin="4,2"
+          Background="{ThemeResource ControlStrokeColorDefaultBrush}"
+        />
+
+        <!--  模糊选项：区域模糊强度  -->
+        <StackPanel
+          x:Name="Panel_Strength"
+          Orientation="Horizontal"
+          Spacing="6"
+          Visibility="Collapsed"
+        >
+          <TextBlock
+            VerticalAlignment="Center"
+            Text="{x:Bind lang:Lang.ScreenshotEditWindow_Strength}"
+          />
+          <Slider x:Name="Slider_Strength" Width="110" Maximum="50" Minimum="2" Value="14" />
+        </StackPanel>
+
+        <!--  高亮/画笔选项：颜色（ColorBox 弹层选色，不内联展开）与粗细  -->
+        <StackPanel
+          x:Name="Panel_ColorOptions"
+          Orientation="Horizontal"
+          Spacing="6"
+          Visibility="Collapsed"
+        >
+          <TextBlock
+            VerticalAlignment="Center"
+            Text="{x:Bind lang:Lang.ScreenshotEditWindow_Color}"
+          />
+          <!--  色块按钮：点开弹层选色（ColorPicker 放弹层里，避免内联展开压缩工具栏）  -->
+          <Button x:Name="Button_ColorSwatch" Width="36" Height="28" Padding="0">
+            <Button.Flyout>
+              <Flyout x:Name="Flyout_Color">
+                <ColorPicker x:Name="ColorPicker_Color" IsAlphaEnabled="False" />
+              </Flyout>
+            </Button.Flyout>
+            <Rectangle
+              x:Name="ColorSwatch_Fill"
+              Width="28"
+              Height="20"
+              RadiusX="2"
+              RadiusY="2"
+              Fill="Red"
+            />
+          </Button>
+          <!--  形状选择（仅形状工具）：形状色块按钮点开弹层选 箭头/圆/框，与色块同款模式  -->
+          <Button
+            x:Name="Button_ShapeSwatch"
+            Width="36"
+            Height="28"
+            Padding="0"
+            Visibility="Collapsed"
+          >
+            <Button.Flyout>
+              <Flyout x:Name="Flyout_Shape">
+                <StackPanel Spacing="2">
+                  <ToggleButton
+                    x:Name="Button_ShapeArrow"
+                    IsChecked="True"
+                    Click="ShapeKindButton_Click"
+                    Padding="10,6"
+                    ToolTipService.ToolTip="{x:Bind lang:Lang.ScreenshotEditWindow_Arrow}"
+                  >
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                      <Path
+                        Width="20"
+                        Height="20"
+                        Stroke="{ThemeResource TextFillColorPrimaryBrush}"
+                        StrokeThickness="1.5"
+                        StrokeStartLineCap="Round"
+                        StrokeEndLineCap="Round"
+                        StrokeLineJoin="Round"
+                        Data="M4,16 L14,6 M14,6 L9.5,6 M14,6 L14,10.5"
+                      />
+                      <TextBlock
+                        VerticalAlignment="Center"
+                        Text="{x:Bind lang:Lang.ScreenshotEditWindow_Arrow}"
+                      />
+                    </StackPanel>
+                  </ToggleButton>
+                  <ToggleButton
+                    x:Name="Button_ShapeCircle"
+                    Click="ShapeKindButton_Click"
+                    Padding="10,6"
+                    ToolTipService.ToolTip="{x:Bind lang:Lang.ScreenshotEditWindow_Circle}"
+                  >
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                      <Ellipse
+                        Width="12"
+                        Height="12"
+                        Margin="4"
+                        Stroke="{ThemeResource TextFillColorPrimaryBrush}"
+                        StrokeThickness="1.5"
+                      />
+                      <TextBlock
+                        VerticalAlignment="Center"
+                        Text="{x:Bind lang:Lang.ScreenshotEditWindow_Circle}"
+                      />
+                    </StackPanel>
+                  </ToggleButton>
+                  <ToggleButton
+                    x:Name="Button_ShapeBox"
+                    Click="ShapeKindButton_Click"
+                    Padding="10,6"
+                    ToolTipService.ToolTip="{x:Bind lang:Lang.ScreenshotEditWindow_Box}"
+                  >
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                      <Rectangle
+                        Width="12"
+                        Height="10"
+                        Margin="4,5"
+                        Stroke="{ThemeResource TextFillColorPrimaryBrush}"
+                        StrokeThickness="1.5"
+                      />
+                      <TextBlock
+                        VerticalAlignment="Center"
+                        Text="{x:Bind lang:Lang.ScreenshotEditWindow_Box}"
+                      />
+                    </StackPanel>
+                  </ToggleButton>
+                </StackPanel>
+              </Flyout>
+            </Button.Flyout>
+            <!--  当前形状色块：三个图标叠放，代码按所选形状切换可见性  -->
+            <Grid Width="24" Height="24">
+              <Path
+                x:Name="ShapeSwatch_Arrow"
+                Width="20"
+                Height="20"
+                Stroke="{ThemeResource TextFillColorPrimaryBrush}"
+                StrokeThickness="1.5"
+                StrokeStartLineCap="Round"
+                StrokeEndLineCap="Round"
+                StrokeLineJoin="Round"
+                Data="M4,16 L14,6 M14,6 L9.5,6 M14,6 L14,10.5"
+              />
+              <Ellipse
+                x:Name="ShapeSwatch_Circle"
+                Width="14"
+                Height="14"
+                Visibility="Collapsed"
+                Stroke="{ThemeResource TextFillColorPrimaryBrush}"
+                StrokeThickness="1.5"
+              />
+              <Rectangle
+                x:Name="ShapeSwatch_Box"
+                Width="14"
+                Height="12"
+                Visibility="Collapsed"
+                Stroke="{ThemeResource TextFillColorPrimaryBrush}"
+                StrokeThickness="1.5"
+              />
+            </Grid>
+          </Button>
+          <TextBlock
+            Margin="6,0,0,0"
+            VerticalAlignment="Center"
+            Text="{x:Bind lang:Lang.ScreenshotEditWindow_Size}"
+          />
+          <Slider x:Name="Slider_Thickness" Width="110" Maximum="48" Minimum="2" Value="8" />
+        </StackPanel>
+
+        <!--  选择工具选项：删除当前选中的元素  -->
+        <StackPanel
+          x:Name="Panel_Delete"
+          Orientation="Horizontal"
+          Spacing="6"
+          Visibility="Collapsed"
+        >
+          <Button
+            x:Name="Button_Delete"
+            Click="Button_Delete_Click"
+            IsEnabled="False"
+            Margin="2,0"
+            Padding="8,4"
+            ToolTipService.ToolTip="{x:Bind lang:Lang.ScreenshotEditWindow_Delete}"
+          >
+            <FontIcon FontSize="16" Glyph="&#xE74D;" />
+          </Button>
+        </StackPanel>
+      </StackPanel>
+      <!--  动作组：撤销/清空/保存/关闭，水平居中，与左侧工具按钮组拉开  -->
+      <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
         <Button
           x:Name="Button_Undo"
           Click="Button_Undo_Click"
@@ -194,181 +381,7 @@
           <FontIcon FontSize="16" Glyph="&#xE8BB;" />
         </Button>
       </StackPanel>
-
-      <Border Width="1" Margin="4,2" Background="{ThemeResource ControlStrokeColorDefaultBrush}" />
-
-      <!--  模糊选项：区域模糊强度  -->
-      <StackPanel
-        x:Name="Panel_Strength"
-        Orientation="Horizontal"
-        Spacing="6"
-        Visibility="Collapsed"
-      >
-        <TextBlock
-          VerticalAlignment="Center"
-          Text="{x:Bind lang:Lang.ScreenshotEditWindow_Strength}"
-        />
-        <Slider x:Name="Slider_Strength" Width="110" Maximum="50" Minimum="2" Value="14" />
-      </StackPanel>
-
-      <!--  高亮/画笔选项：颜色（ColorBox 弹层选色，不内联展开）与粗细  -->
-      <StackPanel
-        x:Name="Panel_ColorOptions"
-        Orientation="Horizontal"
-        Spacing="6"
-        Visibility="Collapsed"
-      >
-        <TextBlock
-          VerticalAlignment="Center"
-          Text="{x:Bind lang:Lang.ScreenshotEditWindow_Color}"
-        />
-        <!--  色块按钮：点开弹层选色（ColorPicker 放弹层里，避免内联展开压缩工具栏）  -->
-        <Button x:Name="Button_ColorSwatch" Width="36" Height="28" Padding="0">
-          <Button.Flyout>
-            <Flyout x:Name="Flyout_Color">
-              <ColorPicker x:Name="ColorPicker_Color" IsAlphaEnabled="False" />
-            </Flyout>
-          </Button.Flyout>
-          <Rectangle
-            x:Name="ColorSwatch_Fill"
-            Width="28"
-            Height="20"
-            RadiusX="2"
-            RadiusY="2"
-            Fill="Red"
-          />
-        </Button>
-        <!--  形状选择（仅形状工具）：形状色块按钮点开弹层选 箭头/圆/框，与色块同款模式  -->
-        <Button
-          x:Name="Button_ShapeSwatch"
-          Width="36"
-          Height="28"
-          Padding="0"
-          Visibility="Collapsed"
-        >
-          <Button.Flyout>
-            <Flyout x:Name="Flyout_Shape">
-              <StackPanel Spacing="2">
-                <ToggleButton
-                  x:Name="Button_ShapeArrow"
-                  IsChecked="True"
-                  Click="ShapeKindButton_Click"
-                  Padding="10,6"
-                  ToolTipService.ToolTip="{x:Bind lang:Lang.ScreenshotEditWindow_Arrow}"
-                >
-                  <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Path
-                      Width="20"
-                      Height="20"
-                      Stroke="{ThemeResource TextFillColorPrimaryBrush}"
-                      StrokeThickness="1.5"
-                      StrokeStartLineCap="Round"
-                      StrokeEndLineCap="Round"
-                      StrokeLineJoin="Round"
-                      Data="M4,16 L14,6 M14,6 L9.5,6 M14,6 L14,10.5"
-                    />
-                    <TextBlock
-                      VerticalAlignment="Center"
-                      Text="{x:Bind lang:Lang.ScreenshotEditWindow_Arrow}"
-                    />
-                  </StackPanel>
-                </ToggleButton>
-                <ToggleButton
-                  x:Name="Button_ShapeCircle"
-                  Click="ShapeKindButton_Click"
-                  Padding="10,6"
-                  ToolTipService.ToolTip="{x:Bind lang:Lang.ScreenshotEditWindow_Circle}"
-                >
-                  <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Ellipse
-                      Width="12"
-                      Height="12"
-                      Margin="4"
-                      Stroke="{ThemeResource TextFillColorPrimaryBrush}"
-                      StrokeThickness="1.5"
-                    />
-                    <TextBlock
-                      VerticalAlignment="Center"
-                      Text="{x:Bind lang:Lang.ScreenshotEditWindow_Circle}"
-                    />
-                  </StackPanel>
-                </ToggleButton>
-                <ToggleButton
-                  x:Name="Button_ShapeBox"
-                  Click="ShapeKindButton_Click"
-                  Padding="10,6"
-                  ToolTipService.ToolTip="{x:Bind lang:Lang.ScreenshotEditWindow_Box}"
-                >
-                  <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Rectangle
-                      Width="12"
-                      Height="10"
-                      Margin="4,5"
-                      Stroke="{ThemeResource TextFillColorPrimaryBrush}"
-                      StrokeThickness="1.5"
-                    />
-                    <TextBlock
-                      VerticalAlignment="Center"
-                      Text="{x:Bind lang:Lang.ScreenshotEditWindow_Box}"
-                    />
-                  </StackPanel>
-                </ToggleButton>
-              </StackPanel>
-            </Flyout>
-          </Button.Flyout>
-          <!--  当前形状色块：三个图标叠放，代码按所选形状切换可见性  -->
-          <Grid Width="24" Height="24">
-            <Path
-              x:Name="ShapeSwatch_Arrow"
-              Width="20"
-              Height="20"
-              Stroke="{ThemeResource TextFillColorPrimaryBrush}"
-              StrokeThickness="1.5"
-              StrokeStartLineCap="Round"
-              StrokeEndLineCap="Round"
-              StrokeLineJoin="Round"
-              Data="M4,16 L14,6 M14,6 L9.5,6 M14,6 L14,10.5"
-            />
-            <Ellipse
-              x:Name="ShapeSwatch_Circle"
-              Width="14"
-              Height="14"
-              Visibility="Collapsed"
-              Stroke="{ThemeResource TextFillColorPrimaryBrush}"
-              StrokeThickness="1.5"
-            />
-            <Rectangle
-              x:Name="ShapeSwatch_Box"
-              Width="14"
-              Height="12"
-              Visibility="Collapsed"
-              Stroke="{ThemeResource TextFillColorPrimaryBrush}"
-              StrokeThickness="1.5"
-            />
-          </Grid>
-        </Button>
-        <TextBlock
-          Margin="6,0,0,0"
-          VerticalAlignment="Center"
-          Text="{x:Bind lang:Lang.ScreenshotEditWindow_Size}"
-        />
-        <Slider x:Name="Slider_Thickness" Width="110" Maximum="48" Minimum="2" Value="8" />
-      </StackPanel>
-
-      <!--  选择工具选项：删除当前选中的元素  -->
-      <StackPanel x:Name="Panel_Delete" Orientation="Horizontal" Spacing="6" Visibility="Collapsed">
-        <Button
-          x:Name="Button_Delete"
-          Click="Button_Delete_Click"
-          IsEnabled="False"
-          Margin="2,0"
-          Padding="8,4"
-          ToolTipService.ToolTip="{x:Bind lang:Lang.ScreenshotEditWindow_Delete}"
-        >
-          <FontIcon FontSize="16" Glyph="&#xE74D;" />
-        </Button>
-      </StackPanel>
-    </StackPanel>
+    </Grid>
 
     <!--  图像区  -->
     <Grid Grid.Row="1" Background="{ThemeResource SmokeFillColorDefaultBrush}">

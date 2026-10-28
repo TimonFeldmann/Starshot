@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Numerics;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -608,7 +609,20 @@ public sealed partial class ScreenshotEditWindow : WindowEx
             }
             // 元素列表随 XMP 嵌入（供重新打开时恢复）；XMP 由服务统一生成
             string path = await ScreenCaptureService.SaveMarkedUpAsync(rt, _ctx, _ops);
+            // 标注结果同步放剪贴板：读回刚保存的文件 → 复用捕获流程的 CF_DIB 机制
+            //（显式保存动作，force 不受自动复制开关约束；本投影无 CanvasBitmap.From/RT.GetPixels）
+            using (var savedFile = File.OpenRead(path))
+            {
+                var marked = await CanvasBitmap.LoadAsync(
+                    CanvasDevice.GetSharedDevice(),
+                    savedFile.AsRandomAccessStream(),
+                    96
+                );
+                await ScreenCaptureService.CopyCaptureToClipboardAsync(marked, force: true);
+                marked.Dispose();
+            }
             TextBlock_Status.Text = $"{Lang.ScreenshotEditWindow_SavedTo}  {path}";
+            Close(); // 保存成功即关闭编辑器
         }
         catch (Exception ex)
         {
