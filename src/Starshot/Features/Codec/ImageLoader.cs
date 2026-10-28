@@ -79,9 +79,22 @@ internal static class ImageLoader
             decoder.ColorPrimaries is avifColorPrimaries.BT2020
             && decoder.TransferCharacteristics is avifTransferCharacteristics.PQ
             && depth == 16;
-        var pixelBytes = await decoder.GetAvifRGBPixelBytesAsync(
-            depth,
-            avifRGBFormat.RGBA,
+        // 按序号取首帧的图像包装器：XMP（含 Starshot 嵌入的标注元素）与像素都在同一包装器上读回。
+        // 不能用 GetNextImage 取像素——GetNthImage 会消耗解码器状态机，之后再 GetNextImage
+        // 会抛 avifDecoderNextImage "No images remaining"（单图文件必现）
+        (byte[]? xmp, byte[] pixelBytes) = await Task.Run(
+            () =>
+            {
+                using var image = decoder.GetNthImage(0);
+                byte[]? x = null;
+                ReadOnlySpan<byte> xm = image.GetXMPMetadata();
+                if (xm.Length > 0)
+                {
+                    x = xm.ToArray();
+                }
+                using var rgb = image.ToRGBImage(depth, avifRGBFormat.RGBA);
+                return (x, rgb.GetPixelBytes().ToArray());
+            },
             cancellationToken
         );
 
@@ -114,6 +127,7 @@ internal static class ImageLoader
                 CanvasBitmap = renderTarget,
                 HDR = true,
                 ColorPrimaries = ColorPrimaries.BT709,
+                XmpData = xmp,
             };
         }
         else
@@ -153,6 +167,7 @@ internal static class ImageLoader
                 HDR = false,
                 ColorPrimaries = colorPrimaries ?? ColorPrimaries.BT709,
                 IccData = iccData.Length > 0 ? iccData.ToArray() : null,
+                XmpData = xmp,
             };
         }
     }
@@ -169,6 +184,12 @@ internal static class ImageLoader
         var pixelFormat = decoder.PixelFormat;
         bool hdr10 = color == JxlColorEncoding.HDR10 && pixelFormat.DataType != JxlDataType.UInt8;
         ImageInfo info = new() { HDR = hdr10 };
+        // XMP（含 Starshot 嵌入的标注元素，供编辑器恢复元素用）
+        try
+        {
+            info.XmpData = decoder.GetXMPData();
+        }
+        catch { }
         if (hdr10)
         {
             info.ColorPrimaries = ColorPrimaries.BT709;
@@ -374,6 +395,25 @@ internal static class ImageLoader
                     };
                     break;
                 }
+                if (chunk.Type == PngChunkType.iTXt)
+                {
+                    // XMP（iTXt，关键字 XML:com.adobe.xmp）：本应用写入布局 = 关键字(17) + 5 个 0 字节 + 载荷（偏移 22），
+                    // 标准 iTXt 文本从偏移 21 起；从 21 起跳过前导 0 字节两种都兼容
+                    Span<byte> content = chunk.ContentData;
+                    if (content.Length > 21 && content[..17].SequenceEqual("XML:com.adobe.xmp"u8))
+                    {
+                        int start = 21;
+                        while (start < content.Length - 1 && content[start] == 0)
+                        {
+                            start++;
+                        }
+                        if (start < content.Length - 1)
+                        {
+                            info.XmpData = content[start..].ToArray();
+                        }
+                    }
+                    break;
+                }
             }
             catch { }
         }
@@ -441,25 +481,6 @@ internal static class ImageLoader
             )
             .AsTask(cancellationToken);
         return info;
-    }
-
-    private static async Task<byte[]> GetAvifRGBPixelBytesAsync(
-        this avifDecoderLite decoder,
-        uint depth,
-        avifRGBFormat format,
-        CancellationToken cancellationToken = default
-    )
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-        return await Task.Run(
-            () =>
-            {
-                using var image = decoder.GetNextImage();
-                using var rgb = image.ToRGBImage(depth, format);
-                return rgb.GetPixelBytes().ToArray();
-            },
-            cancellationToken
-        );
     }
 
     private static async Task<byte[]> GetJxlPixelBytesAsync(

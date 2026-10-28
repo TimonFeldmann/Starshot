@@ -463,6 +463,9 @@
   <data name="ScreenshotPage_Recopy" xml:space="preserve">
     <value>Recopy</value>
   </data>
+  <data name="ScreenshotPage_MarkupOriginalMissing" xml:space="preserve">
+    <value>Original image not found; markup elements can't be restored</value>
+  </data>
   <data name="ImageBatchConvertWindow_Quality" xml:space="preserve">
     <value>Quality</value>
   </data>
@@ -1086,5 +1089,53 @@
   </data>
   <data name="ScreenshotSetting_InfoWindow" xml:space="preserve">
     <value>Screenshot info window</value>
+  </data>
+  <data name="ScreenshotEditWindow_Title" xml:space="preserve">
+    <value>Screenshot Editor</value>
+  </data>
+  <data name="ScreenshotEditWindow_Blur" xml:space="preserve">
+    <value>Blur</value>
+  </data>
+  <data name="ScreenshotEditWindow_Highlight" xml:space="preserve">
+    <value>Highlight</value>
+  </data>
+  <data name="ScreenshotEditWindow_Brush" xml:space="preserve">
+    <value>Brush</value>
+  </data>
+  <data name="ScreenshotEditWindow_Erase" xml:space="preserve">
+    <value>Erase</value>
+  </data>
+  <data name="ScreenshotEditWindow_Select" xml:space="preserve">
+    <value>Select</value>
+  </data>
+  <data name="ScreenshotEditWindow_Delete" xml:space="preserve">
+    <value>Delete selected</value>
+  </data>
+  <data name="ScreenshotEditWindow_Undo" xml:space="preserve">
+    <value>Undo</value>
+  </data>
+  <data name="ScreenshotEditWindow_Clear" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="ScreenshotEditWindow_Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="ScreenshotEditWindow_Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="ScreenshotEditWindow_Color" xml:space="preserve">
+    <value>Color</value>
+  </data>
+  <data name="ScreenshotEditWindow_Size" xml:space="preserve">
+    <value>Size</value>
+  </data>
+  <data name="ScreenshotEditWindow_Strength" xml:space="preserve">
+    <value>Strength</value>
+  </data>
+  <data name="ScreenshotEditWindow_SavedTo" xml:space="preserve">
+    <value>Saved to</value>
+  </data>
+  <data name="ScreenshotEditWindow_SaveFailed" xml:space="preserve">
+    <value>Failed to save the marked-up image</value>
   </data>
 </root>

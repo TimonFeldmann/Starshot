@@ -96,6 +96,11 @@ public abstract partial class WindowEx : Window
         User32.ShowWindow(WindowHandle, ShowWindowCommand.SW_MINIMIZE);
     }
 
+    public virtual void Maximize()
+    {
+        User32.ShowWindow(WindowHandle, ShowWindowCommand.SW_MAXIMIZE);
+    }
+
     public virtual void CenterInScreen(int? width = null, int? height = null)
     {
         width = width <= 0 ? null : width;
@@ -139,6 +144,24 @@ public abstract partial class WindowEx : Window
         )
         {
             AppWindow.TitleBar.SetDragRectangles(value);
+        }
+    }
+
+    /// <summary>
+    /// 把窗口拖动区限制为顶部一条窄带（物理像素）。
+    /// 内容延伸到标题栏后默认整个窗口都是拖动区，工具栏里的滑条/按钮交互会把窗口带走；
+    /// 限制成窄带后只有顶部空白条带可拖动窗口（新 XAML 代码后置文件引用集缺 RectInt32，从本类调用规避）。
+    /// </summary>
+    public void SetTopDragBand(int heightPx)
+    {
+        if (
+            AppWindowTitleBar.IsCustomizationSupported()
+            && AppWindow.TitleBar.ExtendsContentIntoTitleBar == true
+        )
+        {
+            AppWindow.TitleBar.SetDragRectangles(
+                new[] { new RectInt32(0, 0, 100000, heightPx) }
+            );
         }
     }
 

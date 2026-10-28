@@ -14,6 +14,9 @@ internal class ImageInfo : IDisposable
 
     public byte[]? IccData { get; set; }
 
+    /// <summary>XMP 元数据（含 Starshot 嵌入的标注元素 ss:Markup，供编辑器恢复元素用）。</summary>
+    public byte[]? XmpData { get; set; }
+
     private bool disposedValue;
 
     protected virtual void Dispose(bool disposing)

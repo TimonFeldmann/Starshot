@@ -469,6 +469,130 @@ public sealed partial class ScreenshotPage : PageBase
         catch { }
     }
 
+    /// <summary>
+    /// 右键「编辑」：把图库图片加载进标注编辑器。
+    /// 文件嵌入了标注元素（XMP ss:Markup）时，定位原图（元数据 src / 同名去 -marked）作为底图
+    /// 并恢复元素列表（旧元素可再选择/移动/删除）；原图缺失时以平图打开并提示。
+    /// </summary>
+    private async void MenuFlyoutItem_Edit_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            if (sender is FrameworkElement fe && fe.DataContext is ScreenshotItem item)
+            {
+                if (!File.Exists(item.FilePath))
+                {
+                    InAppToast.MainWindow?.Warning(
+                        Lang.ImageViewWindow_FileDoesNotExist,
+                        item.FilePath,
+                        5000
+                    );
+                    return;
+                }
+
+                // 与「复制图像」同款解码管线（HDR 自动 tonemap 成 8 位 SDR 进编辑器）
+                using var imageInfo = await ImageLoader.LoadImageAsync(item.FilePath);
+                // XMP CreateDate 用文件最后修改时间（非捕获帧）
+                DateTimeOffset frameTime = new(File.GetLastWriteTimeUtc(item.FilePath));
+
+                // 解码嵌入的标注元素（如有）
+                var decoded = ScreenshotMarkupCodec.Decode(imageInfo.XmpData);
+                IReadOnlyList<ScreenshotOp>? ops = decoded?.Ops;
+                string? srcName = decoded?.SourceFileName;
+                string? originalPath =
+                    ops is not null
+                        ? ResolveOriginalImagePath(item.FilePath, srcName)
+                        : null;
+
+                if (ops is not null && originalPath is not null && File.Exists(originalPath))
+                {
+                    // 原图在：在原图上恢复元素（避免在标注副本上二次叠加高亮/模糊）
+                    using var originalInfo = await ImageLoader.LoadImageAsync(originalPath);
+                    var ctx = new ScreenshotEditContext
+                    {
+                        Width = (int)originalInfo.CanvasBitmap.SizeInPixels.Width,
+                        Height = (int)originalInfo.CanvasBitmap.SizeInPixels.Height,
+                        SdrWhiteLevel = AppConfig.SdrWhiteLevel,
+                        FrameTime = frameTime,
+                        // 标注副本留在原图旁（同名基名 -marked）
+                        SourceFilePath = originalPath,
+                    };
+                    ScreenCaptureService.OpenEditWindow(originalInfo.CanvasBitmap, ctx, ops);
+                }
+                else
+                {
+                    // 无嵌入元素，或原图缺失：以标注文件本身平开（可加新标注，旧元素已烧进像素）
+                    if (ops is not null)
+                    {
+                        InAppToast.MainWindow?.Warning(
+                            Lang.ScreenshotPage_MarkupOriginalMissing,
+                            item.FilePath,
+                            5000
+                        );
+                    }
+                    var ctx = new ScreenshotEditContext
+                    {
+                        Width = (int)imageInfo.CanvasBitmap.SizeInPixels.Width,
+                        Height = (int)imageInfo.CanvasBitmap.SizeInPixels.Height,
+                        SdrWhiteLevel = AppConfig.SdrWhiteLevel,
+                        FrameTime = frameTime,
+                        // 标注副本写到该文件旁（同名 -marked），不落到截图目录
+                        SourceFilePath = item.FilePath,
+                    };
+                    ScreenCaptureService.OpenEditWindow(imageInfo.CanvasBitmap, ctx);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to open image in markup editor");
+        }
+    }
+
+    /// <summary>
+    /// 定位标注文件的原图（未标注底图）：优先用嵌入元数据记录的文件名（src，同目录）；
+    /// 再退化为同目录同名（剥掉尾部一个 -marked）的支持格式图像扫描。找不到返回 null。
+    /// </summary>
+    private static string? ResolveOriginalImagePath(string markedPath, string? srcName)
+    {
+        string folder = Path.GetDirectoryName(markedPath)!;
+        if (!string.IsNullOrEmpty(srcName) && !srcName.AsSpan().ContainsAny('/', '\\'))
+        {
+            string candidate = Path.Combine(folder, srcName);
+            if (File.Exists(candidate))
+            {
+                return candidate;
+            }
+        }
+        string baseName = Path.GetFileNameWithoutExtension(markedPath);
+        if (!baseName.EndsWith("-marked", StringComparison.Ordinal))
+        {
+            return null;
+        }
+        baseName = baseName[..^"-marked".Length];
+        try
+        {
+            foreach (string file in Directory.EnumerateFiles(folder, baseName + ".*"))
+            {
+                if (
+                    Path.GetFileName(file).EndsWith(
+                        "-marked",
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                )
+                {
+                    continue;
+                }
+                if (ScreenshotHelper.IsSupportedExtension(file))
+                {
+                    return file;
+                }
+            }
+        }
+        catch { }
+        return null;
+    }
+
     private async void MenuFlyoutItem_Ocr_Click(object sender, RoutedEventArgs e)
     {
         try

@@ -191,6 +191,31 @@ internal class ScreenCaptureService
                 displayId
             );
             _logger.LogInformation("Screenshot saved");
+
+            // 原始图已在上面保存；这里打开标注编辑窗口（保存按钮写 -marked 副本）。
+            // 单独 try/catch：打开窗口失败不应把已成功的捕获降级成错误。
+            try
+            {
+                OpenEditWindow(
+                    canvasBitmap,
+                    new ScreenshotEditContext
+                    {
+                        ProcessName = processName,
+                        ProcessExeName = processExeName,
+                        WindowTitle = windowTitle,
+                        FrameTime = frameTime,
+                        SdrWhiteLevel = sdrWhiteLevel,
+                        IsRegion = false,
+                        DisplayId = displayId,
+                        Width = (int)canvasBitmap.SizeInPixels.Width,
+                        Height = (int)canvasBitmap.SizeInPixels.Height,
+                    }
+                );
+            }
+            catch (Exception openEx)
+            {
+                _logger.LogWarning(openEx, "Failed to open edit window after capture");
+            }
         }
         catch (Exception ex)
         {
@@ -593,6 +618,31 @@ internal class ScreenCaptureService
                 CopyCaptureToClipboardAsync(sdrCrop)
             );
             _logger.LogInformation("Region screenshot saved");
+
+            // 原始图已在上面保存；打开标注编辑窗口（保存按钮写 -marked 副本）。
+            // 窗口在构造时已把 cropped 同步转成 8 位 SDR 副本持有，finally 释放 cropped 安全。
+            try
+            {
+                OpenEditWindow(
+                    cropped,
+                    new ScreenshotEditContext
+                    {
+                        ProcessName = processName,
+                        ProcessExeName = processExeName,
+                        WindowTitle = windowTitle,
+                        FrameTime = frameTime,
+                        SdrWhiteLevel = sdrWhiteLevel,
+                        IsRegion = true,
+                        DisplayId = regionDisplayId,
+                        Width = cw,
+                        Height = ch,
+                    }
+                );
+            }
+            catch (Exception openEx)
+            {
+                _logger.LogWarning(openEx, "Failed to open edit window after region capture");
+            }
         }
         catch (Exception ex)
         {
@@ -678,30 +728,14 @@ internal class ScreenCaptureService
             writeColorProfile = true;
         }
 
-        string? targetFolder = AppConfig.ScreenshotFolder;
-        if (string.IsNullOrWhiteSpace(targetFolder))
-        {
-            targetFolder = Path.Join(AppConfig.UserDataFolder, "Screenshots");
-        }
-        string screenshotFolder = Path.GetFullPath(targetFolder);
-        // 按文件夹分类截图：模板展开为子文件夹名（BuildFileName 自带非法字符清洗），建在截图目录下
-        if (AppConfig.ScreenshotSubfolderEnabled)
-        {
-            string subfolder = BuildFileName(
-                processName,
-                processExeName,
-                windowTitle,
-                frameTime,
-                bitmap.SizeInPixels.Width,
-                bitmap.SizeInPixels.Height,
-                AppConfig.ScreenshotSubfolderPattern
-            );
-            if (!string.IsNullOrWhiteSpace(subfolder))
-            {
-                screenshotFolder = Path.Combine(screenshotFolder, subfolder);
-            }
-        }
-        Directory.CreateDirectory(screenshotFolder);
+        string screenshotFolder = ResolveScreenshotFolder(
+            processName,
+            processExeName,
+            windowTitle,
+            frameTime,
+            bitmap.SizeInPixels.Width,
+            bitmap.SizeInPixels.Height
+        );
 
         // 扩展名：HDR 输出走 HDR 格式；SDR（含 deleteHDR）走 SDR 格式
         string extension = outputIsHDR
@@ -839,6 +873,204 @@ internal class ScreenCaptureService
 
         if (ShouldShowInfoWindow())
             _infoWindow?.CaptureSuccess(displayId, bitmap, finalFile, maxCLL);
+    }
+
+    // ==================== 标注编辑窗口 ====================
+
+    /// <summary>
+    /// 解析截图落盘目录（含可选子文件夹），与 SaveCaptureAsync 同源，供标注副本复用。
+    /// </summary>
+    private static string ResolveScreenshotFolder(
+        string processName,
+        string processExeName,
+        string windowTitle,
+        DateTimeOffset frameTime,
+        uint width,
+        uint height
+    )
+    {
+        string? targetFolder = AppConfig.ScreenshotFolder;
+        if (string.IsNullOrWhiteSpace(targetFolder))
+        {
+            targetFolder = Path.Join(AppConfig.UserDataFolder, "Screenshots");
+        }
+        string screenshotFolder = Path.GetFullPath(targetFolder);
+        // 按文件夹分类截图：模板展开为子文件夹名（BuildFileName 自带非法字符清洗），建在截图目录下
+        if (AppConfig.ScreenshotSubfolderEnabled)
+        {
+            string subfolder = BuildFileName(
+                processName,
+                processExeName,
+                windowTitle,
+                frameTime,
+                width,
+                height,
+                AppConfig.ScreenshotSubfolderPattern
+            );
+            if (!string.IsNullOrWhiteSpace(subfolder))
+            {
+                screenshotFolder = Path.Combine(screenshotFolder, subfolder);
+            }
+        }
+        Directory.CreateDirectory(screenshotFolder);
+        return screenshotFolder;
+    }
+
+    /// <summary>
+    /// 捕获完成后打开标注编辑窗口（显示捕获图 + 基础标注工具 + 保存按钮）。
+    /// 窗口会同步把源图转成 8 位 SDR 副本持有，之后调用方可安全释放原图。
+    /// initialOps 非空 = 从嵌入元数据恢复的元素列表（图库重开标注文件时用）。
+    /// </summary>
+    public static void OpenEditWindow(
+        ICanvasImage source,
+        ScreenshotEditContext ctx,
+        IReadOnlyList<ScreenshotOp>? initialOps = null
+    )
+    {
+        var window = new ScreenshotEditWindow(source, ctx, initialOps);
+        window.Show();
+    }
+
+    /// <summary>
+    /// 保存带标注（markup）的截图副本：把编辑器合成的 8 位 SDR 结果写到磁盘，
+    /// 文件名追加 -marked 后缀（重名自动 _2/_3）。返回最终路径。
+    /// 捕获帧 = 截图目录 + 捕获时刻命名；图库图片（ctx.SourceFilePath 非空）= 原文件旁、同名。
+    /// ops 非空时把元素列表嵌入 XMP（ss:Markup），供重新打开编辑器时恢复元素。
+    /// </summary>
+    public static async Task<string> SaveMarkedUpAsync(
+        CanvasRenderTarget markedUp,
+        ScreenshotEditContext ctx,
+        IReadOnlyList<ScreenshotOp>? ops = null,
+        byte[]? xmpData = null
+    )
+    {
+        string folder;
+        string baseName;
+        string extension;
+        if (!string.IsNullOrWhiteSpace(ctx.SourceFilePath))
+        {
+            // 图库图片编辑：标注副本写到原文件旁边（同目录 + 同名 + -marked）。
+            // 原扩展名可编码（png/avif/jxl）时保留原格式，否则回落到配置的 SDR 格式
+            folder = Path.GetDirectoryName(ctx.SourceFilePath)!;
+            baseName = Path.GetFileNameWithoutExtension(ctx.SourceFilePath);
+            // 重编辑标注副本（-marked 文件）时剥掉后缀，避免生成 -marked-marked
+            if (baseName.EndsWith("-marked", StringComparison.Ordinal))
+            {
+                baseName = baseName[..^"-marked".Length];
+            }
+            string originalExt = Path
+                .GetExtension(ctx.SourceFilePath)
+                .TrimStart('.')
+                .ToLowerInvariant();
+            extension = originalExt is "png" or "avif" or "jxl"
+                ? originalExt
+                : AppConfig.ScreenCaptureSDRFormat switch
+                {
+                    1 => "avif",
+                    2 => "jxl",
+                    _ => "png",
+                };
+        }
+        else
+        {
+            folder = ResolveScreenshotFolder(
+                ctx.ProcessName,
+                ctx.ProcessExeName,
+                ctx.WindowTitle,
+                ctx.FrameTime,
+                (uint)ctx.Width,
+                (uint)ctx.Height
+            );
+
+            // 标注结果是 8 位 SDR，走 SDR 格式
+            extension =
+                AppConfig.ScreenCaptureSDRFormat switch
+                {
+                    1 => "avif",
+                    2 => "jxl",
+                    _ => "png",
+                };
+            baseName = BuildFileName(
+                ctx.ProcessName,
+                ctx.ProcessExeName,
+                ctx.WindowTitle,
+                ctx.FrameTime,
+                (uint)ctx.Width,
+                (uint)ctx.Height,
+                ctx.IsRegion ? AppConfig.RegionScreenshotFileNamePattern : null
+            );
+        }
+        int quality = AppConfig.ScreenCaptureEncodeQuality switch
+        {
+            0 => 80,
+            1 => 90,
+            2 => 100,
+            _ => 90,
+        };
+        float distance = AppConfig.ScreenCaptureEncodeQuality switch
+        {
+            0 => 2,
+            1 => 1,
+            2 => 0,
+            _ => 1,
+        };
+
+        string filePath = EnsureUniquePath(
+            Path.Combine(folder, $"{baseName}-marked.{extension}")
+        );
+
+        // 元素列表 + 底图（原图）文件名嵌入 XMP：重新打开编辑器时可恢复元素、
+        // 并在原图上重放（原图缺失时 ResolveOriginalFileName 返回 null，只存元素）
+        xmpData ??= BuildXMPMetadata(
+            ctx.FrameTime,
+            ScreenshotMarkupCodec.Encode(
+                ops,
+                ResolveOriginalFileName(folder, baseName, extension)
+            )
+        );
+
+        using MemoryStream ms = new();
+        await _encodeSlim.WaitAsync();
+        try
+        {
+            if (extension is "png")
+            {
+                await ImageSaver.SaveAsPngAsync(markedUp, ms, ColorPrimaries.BT709, xmpData, false);
+            }
+            else if (extension is "avif")
+            {
+                await ImageSaver.SaveAsAvifAsync(
+                    markedUp,
+                    ms,
+                    ColorPrimaries.BT709,
+                    quality,
+                    xmpData,
+                    false
+                );
+            }
+            else
+            {
+                await ImageSaver.SaveAsJxlAsync(
+                    markedUp,
+                    ms,
+                    ColorPrimaries.BT709,
+                    distance,
+                    xmpData,
+                    false
+                );
+            }
+        }
+        finally
+        {
+            _encodeSlim.Release();
+        }
+
+        using (var fs = File.Create(filePath))
+        {
+            ms.Seek(0, SeekOrigin.Begin);
+            await ms.CopyToAsync(fs);
+        }
+        return filePath;
     }
 
     /// <summary>
@@ -1156,12 +1388,59 @@ internal class ScreenCaptureService
             && v.Y < 1f;
     }
 
-    public static byte[] BuildXMPMetadata(DateTimeOffset time)
+    public static byte[] BuildXMPMetadata(DateTimeOffset time, string? markupBase64 = null)
     {
+        // base64 载荷只含 [A-Za-z0-9+/=]，XML 安全、免转义
+        string markup = string.IsNullOrEmpty(markupBase64)
+            ? ""
+            : $"""<ss:Markup>{markupBase64}</ss:Markup>""";
         string value = $"""
-            <x:xmpmeta xmlns:x="adobe:ns:meta/"><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:xmp="http://ns.adobe.com/xap/1.0/"><xmp:CreatorTool>Starshot</xmp:CreatorTool><xmp:CreateDate>{time:yyyy-MM-ddTHH:mm:sszzz}</xmp:CreateDate></rdf:Description></rdf:RDF></x:xmpmeta>
+            <x:xmpmeta xmlns:x="adobe:ns:meta/"><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:ss="http://starshot.app/marks/"><xmp:CreatorTool>Starshot</xmp:CreatorTool><xmp:CreateDate>{time:yyyy-MM-ddTHH:mm:sszzz}</xmp:CreateDate>{markup}</rdf:Description></rdf:RDF></x:xmpmeta>
             """;
         return Encoding.UTF8.GetBytes(value);
+    }
+
+    /// <summary>
+    /// 在同目录定位标注副本的底图（标注前的原图）：精确名 {baseName}.&lt;扩展名&gt; 匹配
+    /// （支持任意图像扩展名，排除 -marked 文件）。原捕获的扩展名取决于当时的 HDR/SDR 配置
+    /// （标注副本恒为 SDR 格式），无法从标注副本推导，只能按文件名扫描；找不到返回 null。
+    /// </summary>
+    private static string? ResolveOriginalFileName(
+        string folder,
+        string baseName,
+        string fallbackExtension
+    )
+    {
+        try
+        {
+            string exact = Path.Combine(folder, $"{baseName}.{fallbackExtension}");
+            if (File.Exists(exact))
+            {
+                return exact;
+            }
+        }
+        catch { }
+        try
+        {
+            foreach (string file in Directory.EnumerateFiles(folder, baseName + ".*"))
+            {
+                if (
+                    Path.GetFileName(file).EndsWith(
+                        "-marked",
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                )
+                {
+                    continue;
+                }
+                if (ScreenshotHelper.IsSupportedExtension(file))
+                {
+                    return file;
+                }
+            }
+        }
+        catch { }
+        return null;
     }
 
     /// <summary>
@@ -1253,4 +1532,31 @@ internal class ScreenCaptureService
         float maxFALL = total > 0 ? (float)(weighted / total) : 0;
         return (maxCLL, maxFALL);
     }
+}
+
+/// <summary>
+/// 标注编辑窗口的保存上下文：捕获当时的元数据，供窗口保存带标注副本时定位目录/命名。
+/// </summary>
+public sealed class ScreenshotEditContext
+{
+    public string ProcessName { get; init; } = "";
+
+    public string ProcessExeName { get; init; } = "";
+
+    public string WindowTitle { get; init; } = "";
+
+    public DateTimeOffset FrameTime { get; init; }
+
+    public float SdrWhiteLevel { get; init; } = 80;
+
+    public bool IsRegion { get; init; }
+
+    public Microsoft.UI.DisplayId DisplayId { get; init; }
+
+    public int Width { get; init; }
+
+    public int Height { get; init; }
+
+    /// <summary>非空 = 编辑图库图片（而非刚捕获的帧）：标注副本写到该文件同目录、同名 -marked。</summary>
+    public string? SourceFilePath { get; init; }
 }

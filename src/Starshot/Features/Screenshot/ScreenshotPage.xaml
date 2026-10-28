@@ -166,6 +166,17 @@
                     <FontIcon Glyph="&#xE8A7;" IsTextScaleFactorEnabled="False" />
                   </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
+                <!--  编辑（在标注编辑器中打开：模糊/高亮/画笔/擦除/选择）  -->
+                <MenuFlyoutItem
+                  x:Name="MenuFlyoutItem_Edit"
+                  Click="MenuFlyoutItem_Edit_Click"
+                  IsTextScaleFactorEnabled="False"
+                  Text="{x:Bind lang:Lang.Common_Edit}"
+                >
+                  <MenuFlyoutItem.Icon>
+                    <FontIcon Glyph="&#xE70F;" IsTextScaleFactorEnabled="False" />
+                  </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
                 <!--  识别文字（打开查看器直接进入 OCR）  -->
                 <MenuFlyoutItem
                   x:Name="MenuFlyoutItem_Ocr"
