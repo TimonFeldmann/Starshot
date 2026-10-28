@@ -1096,6 +1096,15 @@ namespace Starshot.Language {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Arrow.
+        /// </summary>
+        public static string ScreenshotEditWindow_Arrow {
+            get {
+                return ResourceManager.GetString("ScreenshotEditWindow_Arrow", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Blur.
         /// </summary>
         public static string ScreenshotEditWindow_Blur {
@@ -1105,11 +1114,29 @@ namespace Starshot.Language {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Box.
+        /// </summary>
+        public static string ScreenshotEditWindow_Box {
+            get {
+                return ResourceManager.GetString("ScreenshotEditWindow_Box", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Brush.
         /// </summary>
         public static string ScreenshotEditWindow_Brush {
             get {
                 return ResourceManager.GetString("ScreenshotEditWindow_Brush", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Circle.
+        /// </summary>
+        public static string ScreenshotEditWindow_Circle {
+            get {
+                return ResourceManager.GetString("ScreenshotEditWindow_Circle", resourceCulture);
             }
         }
         
@@ -1146,6 +1173,15 @@ namespace Starshot.Language {
         public static string ScreenshotEditWindow_Delete {
             get {
                 return ResourceManager.GetString("ScreenshotEditWindow_Delete", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Tip: drag a tool button to re-order the toolbar.
+        /// </summary>
+        public static string ScreenshotEditWindow_DragHint {
+            get {
+                return ResourceManager.GetString("ScreenshotEditWindow_DragHint", resourceCulture);
             }
         }
         
@@ -1200,6 +1236,15 @@ namespace Starshot.Language {
         public static string ScreenshotEditWindow_Select {
             get {
                 return ResourceManager.GetString("ScreenshotEditWindow_Select", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Shapes.
+        /// </summary>
+        public static string ScreenshotEditWindow_Shapes {
+            get {
+                return ResourceManager.GetString("ScreenshotEditWindow_Shapes", resourceCulture);
             }
         }
         

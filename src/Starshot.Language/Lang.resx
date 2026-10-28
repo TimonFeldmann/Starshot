@@ -1138,4 +1138,19 @@
   <data name="ScreenshotEditWindow_SaveFailed" xml:space="preserve">
     <value>Failed to save the marked-up image</value>
   </data>
+  <data name="ScreenshotEditWindow_Shapes" xml:space="preserve">
+    <value>Shapes</value>
+  </data>
+  <data name="ScreenshotEditWindow_Arrow" xml:space="preserve">
+    <value>Arrow</value>
+  </data>
+  <data name="ScreenshotEditWindow_Circle" xml:space="preserve">
+    <value>Circle</value>
+  </data>
+  <data name="ScreenshotEditWindow_Box" xml:space="preserve">
+    <value>Box</value>
+  </data>
+  <data name="ScreenshotEditWindow_DragHint" xml:space="preserve">
+    <value>Tip: drag a tool button to re-order the toolbar</value>
+  </data>
 </root>

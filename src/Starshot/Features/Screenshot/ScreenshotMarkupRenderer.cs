@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Effects;
+using Microsoft.Graphics.Canvas.Geometry;
 using Microsoft.UI;
 using Windows.Foundation;
 using Windows.UI;
@@ -54,8 +55,46 @@ internal sealed class ScreenshotEraseRegion
     public int PatchH { get; set; }
 }
 
+/// <summary>形状工具的形状类型：拖拽创建（起点 = 按下点，终点 = 释放点）。</summary>
+internal enum ScreenshotShapeKind
+{
+    /// <summary>箭头（线段 + V 形箭头，起点 → 终点为指向）。</summary>
+    Arrow = 0,
+
+    /// <summary>圆（椭圆，对角线定外接圆）。</summary>
+    Circle = 1,
+
+    /// <summary>矩形框（对角线定外接框）。</summary>
+    Box = 2,
+}
+
+/// <summary>形状元素（形状 + 颜色 + 粗细，颜色/粗细与画笔同源）：图像坐标起点/终点。</summary>
+internal sealed class ScreenshotShape
+{
+    public ScreenshotShapeKind Kind { get; set; }
+
+    public Vector2 Start { get; set; }
+
+    public Vector2 End { get; set; }
+
+    public Color Color { get; set; }
+
+    public float Thickness { get; set; }
+
+    /// <summary>包围盒（命中测试 / 移动 / 选中框共用）。</summary>
+    public Rect Bounds
+    {
+        get
+        {
+            float x = Math.Min(Start.X, End.X);
+            float y = Math.Min(Start.Y, End.Y);
+            return new Rect(x, y, Math.Abs(End.X - Start.X), Math.Abs(End.Y - Start.Y));
+        }
+    }
+}
+
 /// <summary>
-/// 一个标注操作（笔画 或 模糊区域 或 擦除区域）。统一成单条历史，供 Undo / Clear 使用。
+/// 一个标注操作（笔画 或 模糊区域 或 擦除区域 或 形状）。统一成单条历史，供 Undo / Clear 使用。
 /// </summary>
 internal sealed class ScreenshotOp
 {
@@ -64,6 +103,8 @@ internal sealed class ScreenshotOp
     public ScreenshotBlurRegion? Blur { get; init; }
 
     public ScreenshotEraseRegion? Erase { get; init; }
+
+    public ScreenshotShape? Shape { get; init; }
 
     public bool IsBlur => Blur is not null;
 
@@ -106,10 +147,10 @@ internal static class ScreenshotMarkupRenderer
             DrawOp(ds, current, markerLayer, blurredProvider, eraserProvider, eraseFill: false);
         }
 
-        // 拖拽中的区域（模糊/擦除）实时框：拖动过程中始终可见
-        if (current?.Erase is not null || current?.Blur is not null)
+        // 拖拽中的区域（模糊/擦除/形状）实时框：拖动过程中始终可见
+        if (current?.Erase is not null || current?.Blur is not null || current?.Shape is not null)
         {
-            Rect r = current.Erase?.Rect ?? current.Blur!.Rect;
+            Rect r = current.Erase?.Rect ?? current.Blur?.Rect ?? ShapeBounds(current.Shape!);
             if (r.Width > 0f && r.Height > 0f)
             {
                 DrawBoxOutline(ds, r);
@@ -149,11 +190,7 @@ internal static class ScreenshotMarkupRenderer
                 lds.Clear(Colors.Transparent);
                 DrawStroke(lds, op.Stroke);
                 ds.DrawImage(
-                    new OpacityEffect
-                    {
-                        Source = markerLayer,
-                        Opacity = HighlightOpacity,
-                    }
+                    new OpacityEffect { Source = markerLayer, Opacity = HighlightOpacity }
                 );
             }
             else
@@ -161,6 +198,10 @@ internal static class ScreenshotMarkupRenderer
                 // 不透明画笔直接画进主会话（圆盘链同色重叠无色带）
                 DrawStroke(ds, op.Stroke);
             }
+        }
+        else if (op.Shape is not null)
+        {
+            DrawShape(ds, op.Shape);
         }
     }
 
@@ -218,6 +259,105 @@ internal static class ScreenshotMarkupRenderer
         {
             DrawStrokeOutline(ds, op.Stroke);
         }
+        else if (op.Shape is not null)
+        {
+            DrawBoxOutline(ds, ShapeBounds(op.Shape));
+        }
+    }
+
+    /// <summary>形状包围盒（该 Win2D 投影里 Windows.Foundation.Rect 的成员是 double）。</summary>
+    public static Rect ShapeBounds(ScreenshotShape sh)
+    {
+        return sh.Bounds;
+    }
+
+    /// <summary>
+    /// 形状绘制：圆/矩形 = 描边（几何向内缩半个线宽，描边外缘正好落在包围盒上）；
+    /// 箭头 = 主干线 + V 形箭头两笔（圆头圆角）。
+    /// </summary>
+    private static void DrawShape(CanvasDrawingSession ds, ScreenshotShape sh)
+    {
+        Color c = sh.Color;
+        float t = sh.Thickness;
+        var pen = new CanvasStrokeStyle
+        {
+            StartCap = CanvasCapStyle.Round,
+            EndCap = CanvasCapStyle.Round,
+            LineJoin = CanvasLineJoin.Round,
+        };
+        switch (sh.Kind)
+        {
+            case ScreenshotShapeKind.Circle:
+            {
+                Rect r = sh.Bounds;
+                if (r.Width < 1f || r.Height < 1f)
+                {
+                    ds.FillEllipse(sh.Start, t / 2f, t / 2f, c);
+                    break;
+                }
+                ds.DrawEllipse(
+                    (float)r.X + t / 2f,
+                    (float)r.Y + t / 2f,
+                    (float)r.Width / 2f,
+                    (float)r.Height / 2f,
+                    c,
+                    t,
+                    pen
+                );
+                break;
+            }
+            case ScreenshotShapeKind.Box:
+            {
+                Rect r = sh.Bounds;
+                if (r.Width < 1f || r.Height < 1f)
+                {
+                    ds.FillEllipse(sh.Start, t / 2f, t / 2f, c);
+                    break;
+                }
+                float rad = Math.Min(4f, Math.Min((float)r.Width, (float)r.Height) / 4f);
+                ds.DrawRoundedRectangle(
+                    (float)r.X + t / 2f,
+                    (float)r.Y + t / 2f,
+                    Math.Max(t, (float)r.Width - t),
+                    Math.Max(t, (float)r.Height - t),
+                    rad,
+                    rad,
+                    c,
+                    t,
+                    pen
+                );
+                break;
+            }
+            default:
+            {
+                // 箭头：主干画到「肩部」，V 形两笔在终点张开
+                var (shoulder, side) = ArrowHead(sh.Start, sh.End, sh.Thickness);
+                ds.DrawLine(sh.Start, shoulder, c, t, pen);
+                ds.DrawLine(shoulder + side, sh.End, c, t, pen);
+                ds.DrawLine(sh.End, shoulder - side, c, t, pen);
+                break;
+            }
+        }
+    }
+
+    /// <summary>箭头头部几何：肩部（主干终点）与半宽向量（V 两笔的偏移），与窗口层命中测试共用。</summary>
+    public static (Vector2 Shoulder, Vector2 Side) ArrowHead(
+        Vector2 start,
+        Vector2 end,
+        float thickness
+    )
+    {
+        Vector2 d = end - start;
+        float len = MathF.Sqrt(Vector2.Dot(d, d));
+        if (len < 1e-3f)
+        {
+            return (end, Vector2.Zero);
+        }
+        Vector2 u = d / len;
+        float head = MathF.Min(MathF.Max(thickness * 2.5f, 8f), len * 0.9f);
+        Vector2 shoulder = end - u * head;
+        Vector2 side = new Vector2(-u.Y, u.X) * (head * 0.5f);
+        return (shoulder, side);
     }
 
     /// <summary>外黑内白双线矩形框（深浅底色上都可见）。</summary>
@@ -255,12 +395,7 @@ internal static class ScreenshotMarkupRenderer
         float pad = st.Thickness / 2f + 3f;
         DrawBoxOutline(
             ds,
-            new Rect(
-                minX - pad,
-                minY - pad,
-                maxX - minX + 2f * pad,
-                maxY - minY + 2f * pad
-            )
+            new Rect(minX - pad, minY - pad, maxX - minX + 2f * pad, maxY - minY + 2f * pad)
         );
     }
 
@@ -292,7 +427,8 @@ internal static class ScreenshotMarkupRenderer
         var outp = new List<Vector2>(raw.Count * 4) { raw[0] };
         for (int i = 1; i < raw.Count; i++)
         {
-            Vector2 a = raw[i - 1], b = raw[i];
+            Vector2 a = raw[i - 1],
+                b = raw[i];
             float dist = Vector2.Distance(a, b);
             int n = (int)MathF.Ceiling(dist / step);
             if (n < 1)

@@ -713,6 +713,16 @@ public static partial class AppConfig
         set => SetValue(value);
     }
 
+    /// <summary>
+    /// 标注编辑器工具栏按钮顺序（工具名列表，如 ["Blur","Highlight","Brush","Shapes","Erase","Select"]）：
+    /// 编辑窗口内拖拽排序后写入，下次打开编辑器按此顺序排布；缺失/未知条目按默认顺序补齐
+    /// </summary>
+    public static List<string> ScreenshotEditToolbarOrder
+    {
+        get => GetListValue();
+        set => SetListValue(value);
+    }
+
     #endregion
 
 

@@ -55,16 +55,12 @@ internal static class ScreenshotMarkupCodec
             }
         }
         return Convert.ToBase64String(
-            Encoding.UTF8.GetBytes(
-                JsonSerializer.Serialize(payload, SerializerOptions)
-            )
+            Encoding.UTF8.GetBytes(JsonSerializer.Serialize(payload, SerializerOptions))
         );
     }
 
     /// <summary>从 XMP（整块）解析元素列表 + 底图文件名；未嵌入或解析失败返回 null。</summary>
-    public static (IReadOnlyList<ScreenshotOp> Ops, string? SourceFileName)? Decode(
-        byte[]? xmp
-    )
+    public static (IReadOnlyList<ScreenshotOp> Ops, string? SourceFileName)? Decode(byte[]? xmp)
     {
         if (xmp is null || xmp.Length == 0)
         {
@@ -87,10 +83,7 @@ internal static class ScreenshotMarkupCodec
         MarkupPayload? payload;
         try
         {
-            payload = JsonSerializer.Deserialize<MarkupPayload>(
-                json,
-                SerializerOptions
-            );
+            payload = JsonSerializer.Deserialize<MarkupPayload>(json, SerializerOptions);
         }
         catch (JsonException)
         {
@@ -152,10 +145,25 @@ internal static class ScreenshotMarkupCodec
             {
                 T = "e",
                 R = RectValues(e.Rect),
-                Sp = new double[]
+                Sp = new double[] { MathF.Round(e.Sample.X, 2), MathF.Round(e.Sample.Y, 2) },
+            };
+        }
+        if (op.Shape is not null)
+        {
+            ScreenshotShape s = op.Shape;
+            Color c = s.Color;
+            return new OpDto
+            {
+                T = "h",
+                K = (int)s.Kind,
+                C = new int[] { c.A, c.R, c.G, c.B },
+                Th = MathF.Round(s.Thickness, 2),
+                Pe = new double[]
                 {
-                    MathF.Round(e.Sample.X, 2),
-                    MathF.Round(e.Sample.Y, 2),
+                    MathF.Round(s.Start.X, 2),
+                    MathF.Round(s.Start.Y, 2),
+                    MathF.Round(s.End.X, 2),
+                    MathF.Round(s.End.Y, 2),
                 },
             };
         }
@@ -232,6 +240,25 @@ internal static class ScreenshotMarkupCodec
                             : new Vector2((float)dto.R[0], (float)dto.R[1]),
                 };
                 return new ScreenshotOp { Erase = erase };
+            case "h":
+                if (dto.Pe is null || dto.Pe.Length < 4)
+                {
+                    return null;
+                }
+                var shape = new ScreenshotShape
+                {
+                    Kind = (ScreenshotShapeKind)Math.Clamp(dto.K, 0, 2),
+                    Color = Color.FromArgb(
+                        (byte)Math.Clamp(dto.C?[0] ?? 0xFF, 0, 255),
+                        (byte)Math.Clamp(dto.C?[1] ?? 0xFF, 0, 255),
+                        (byte)Math.Clamp(dto.C?[2] ?? 0, 0, 255),
+                        (byte)Math.Clamp(dto.C?[3] ?? 0, 0, 255)
+                    ),
+                    Thickness = (float)Math.Max(1.0, dto.Th),
+                    Start = new Vector2((float)dto.Pe[0], (float)dto.Pe[1]),
+                    End = new Vector2((float)dto.Pe[2], (float)dto.Pe[3]),
+                };
+                return new ScreenshotOp { Shape = shape };
             default:
                 return null;
         }
@@ -260,7 +287,8 @@ internal static class ScreenshotMarkupCodec
 
     /// <summary>
     /// 单条元素（camelCase 短键）：s=笔画（c 色 ARGB、th 粗细、hl 高亮、p 点列）；
-    /// b=模糊（r 矩形 x/y/w/h、st 强度）；e=擦除（r 矩形、sp 采样点）。
+    /// b=模糊（r 矩形 x/y/w/h、st 强度）；e=擦除（r 矩形、sp 采样点）；
+    /// h=形状（k 类型 0箭头/1圆/2框、c 色、th 粗细、pe 起点/终点 4 值）。
     /// </summary>
     private sealed class OpDto
     {
@@ -279,5 +307,9 @@ internal static class ScreenshotMarkupCodec
         public double St { get; set; }
 
         public double[]? Sp { get; set; }
+
+        public int K { get; set; }
+
+        public double[]? Pe { get; set; }
     }
 }
