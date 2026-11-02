@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
@@ -6,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using Starshot.Features.Recording;
 using Starshot.Features.Screenshot;
 using Starshot.Features.Setting;
 using Starshot.Frameworks;
@@ -26,6 +28,14 @@ public sealed partial class SystemTrayWindow : WindowEx
     private const int HOTKEY_REGION_COPY = 44447;
 
     private const int HOTKEY_REGION_OCR = 44448;
+
+    private const int HOTKEY_RECORD_FULL = 44449;
+
+    private const int HOTKEY_RECORD_REGION = 44450;
+
+    private const int HOTKEY_RECORD_WINDOW = 44451;
+
+    private readonly DispatcherQueueTimer _recordingTimer;
 
     public SystemTrayWindow()
     {
@@ -54,6 +64,13 @@ public sealed partial class SystemTrayWindow : WindowEx
             this,
             (_, _) => this.Bindings.Update()
         );
+
+        // 录制中每秒刷新停止按钮的计时文本（托盘是唯一录制指示器：屏幕 UI 会被 WGC 录进画面）
+        _recordingTimer = DispatcherQueue.CreateTimer();
+        _recordingTimer.Interval = TimeSpan.FromSeconds(1);
+        _recordingTimer.IsRepeating = true;
+        _recordingTimer.Tick += (_, _) => UpdateRecordingUi();
+        AppConfig.GetService<VideoRecordService>().RecordingChanged += UpdateRecordingUi;
     }
 
     protected override nint WindowSubclassProc(
@@ -80,6 +97,15 @@ public sealed partial class SystemTrayWindow : WindowEx
                     break;
                 case HOTKEY_REGION_OCR:
                     ScreenCaptureService.CaptureRegionOcrCopy();
+                    break;
+                case HOTKEY_RECORD_FULL:
+                    _ = VideoRecordServiceToggle(VideoRecordTarget.FullScreen);
+                    break;
+                case HOTKEY_RECORD_REGION:
+                    _ = VideoRecordServiceToggle(VideoRecordTarget.Region);
+                    break;
+                case HOTKEY_RECORD_WINDOW:
+                    _ = VideoRecordServiceToggle(VideoRecordTarget.Window);
                     break;
             }
         }
@@ -290,6 +316,71 @@ public sealed partial class SystemTrayWindow : WindowEx
     {
         Hide();
         ScreenCaptureService.CaptureRegionOcrCopy();
+    }
+
+    // ==================== 录制（托盘菜单） ====================
+
+    /// <summary>热键 / 菜单共用的开关入口（录制中 = 停止）。</summary>
+    private Task VideoRecordServiceToggle(VideoRecordTarget target)
+    {
+        return AppConfig.GetService<VideoRecordService>().ToggleAsync(target);
+    }
+
+    [RelayCommand]
+    private void RecordFull()
+    {
+        Hide();
+        _ = VideoRecordServiceToggle(VideoRecordTarget.FullScreen);
+    }
+
+    [RelayCommand]
+    private void RecordRegion()
+    {
+        Hide();
+        _ = VideoRecordServiceToggle(VideoRecordTarget.Region);
+    }
+
+    [RelayCommand]
+    private void RecordWindow()
+    {
+        Hide();
+        _ = VideoRecordServiceToggle(VideoRecordTarget.Window);
+    }
+
+    [RelayCommand]
+    private void StopRecord()
+    {
+        // 开关语义：录制中调用 Toggle 即停止（目标参数无关）
+        _ = VideoRecordServiceToggle(VideoRecordTarget.FullScreen);
+    }
+
+    public bool IsRecording { get; private set; }
+
+    public string StopRecordText { get; private set; } = string.Empty;
+
+    /// <summary>刷新录制指示（停止按钮显隐 + 计时文本）。UI 线程调用。</summary>
+    private void UpdateRecordingUi()
+    {
+        var svc = AppConfig.GetService<VideoRecordService>();
+        IsRecording = svc.IsRecording;
+        if (svc.IsRecording)
+        {
+            var e = svc.Elapsed;
+            StopRecordText = string.Format(
+                Lang.Starshot_RecordingStop,
+                $"{(int)e.TotalMinutes:D2}:{e.Seconds:D2}"
+            );
+            if (!_recordingTimer.IsRunning)
+            {
+                _recordingTimer.Start();
+            }
+        }
+        else
+        {
+            StopRecordText = string.Empty;
+            _recordingTimer.Stop();
+        }
+        StopRecordButton.Visibility = svc.IsRecording ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void WindowEx_Closed(object sender, WindowEventArgs args)

@@ -85,6 +85,19 @@ public static class Program
         AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 
         global::WinRT.ComWrappersSupport.InitializeComWrappers();
+        // 无头录制测试宿主（仅 DEBUG）：Starshot.exe --record-test [fullscreen|window] [秒数]
+        // 驱动真实 VideoRecordService 录 N 秒产出 MP4，供程序化校验录制管线；不起任何 UI
+#if DEBUG
+        if (args.Length > 0 && args[0] == "--record-test")
+        {
+            return Features.Recording.RecordTestHost.Run(args);
+        }
+        // Headless per-display advanced-color probe (DEBUG only): Starshot.exe --hdr-probe
+        if (args.Length > 0 && args[0] == "--hdr-probe")
+        {
+            return Features.Recording.HdrProbeHost.Run(args);
+        }
+#endif
         global::Microsoft.UI.Xaml.Application.Start(
             (p) =>
             {

@@ -168,6 +168,36 @@ public static partial class AppConfig
     }
 
     /// <summary>
+    /// 无头录制测试宿主（Program 的 --record-test 分支，仅 DEBUG）最小初始化：
+    /// 数据位置/版本号/日志路径与 CheckEnviromentAsync 同语义，但不走欢迎页/壁纸/强调色。
+    /// </summary>
+#if DEBUG
+    internal static void PrepareHeadless()
+    {
+        string baseDir = AppContext.BaseDirectory.TrimEnd(
+            Path.DirectorySeparatorChar,
+            Path.AltDirectorySeparatorChar
+        );
+        UserDataFolder = Installer
+            ? Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "Starshot"
+            )
+            : Path.GetDirectoryName(baseDir) ?? baseDir;
+        AppVersion = "Debug";
+        string localAppData = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Starshot"
+        );
+        CacheFolder = localAppData;
+        LogFile = Path.Combine(localAppData, "log", BuildLogFileName());
+        Directory.CreateDirectory(CacheFolder);
+        Directory.CreateDirectory(Path.GetDirectoryName(LogFile)!);
+        EnsureConfigFile(); // 加载 config.sjson 到缓存（ScreenshotFolder 等设置可用）
+    }
+#endif
+
+    /// <summary>
     /// 旧布局 CacheFolder=根/cache，把里面的 bg/thumb 展开到根，与 log 平级。
     /// 幂等：新布局已无 根/cache（或里面已无 bg/thumb）时啥也不做。
     /// </summary>

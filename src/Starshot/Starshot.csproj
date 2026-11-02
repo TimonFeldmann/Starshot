@@ -110,6 +110,23 @@
     <ProjectReference Include="..\Starshot.Language\Starshot.Language.csproj" />
   </ItemGroup>
 
+  <!-- 录制编码器 (仅 x64 随包): 垫片 + 3 个 LGPL 编码器 → 输出目录 codecs\ 子目录。
+       先跑 tools\codecs\build-codecs.ps1 生成 build\codecs\；缺了录制功能降级不可用（Init 报错提示）。 -->
+  <ItemGroup Condition="'$(Platform)' == 'x64' And Exists('..\..\build\codecs\Starshot.Codecs.dll')">
+    <Content Include="..\..\build\codecs\Starshot.Codecs.dll" Link="codecs\Starshot.Codecs.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\build\codecs\libx264-164.dll" Link="codecs\libx264-164.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\build\codecs\libx265.dll" Link="codecs\libx265.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\build\codecs\faac-2.dll" Link="codecs\faac-2.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
   <!-- 若先编译了启动器会自动拷到 `build/release/` -->
   <Target Name="CopyLauncher" AfterTargets="Publish">
     <PropertyGroup>

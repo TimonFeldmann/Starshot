@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<sf:PageBase
+  x:Class="Starshot.Features.Setting.RecordingSetting"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:lang="using:Starshot.Language"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  xmlns:sf="using:Starshot.Frameworks"
+  x:DefaultBindMode="OneWay"
+  mc:Ignorable="d"
+>
+  <ScrollViewer Padding="0">
+    <StackPanel Width="820" Padding="36,24,36,36" Spacing="20">
+      <TextBlock FontSize="28" FontWeight="Bold" Text="{x:Bind lang:Lang.Starshot_Nav_Recording}" />
+
+      <!--  HDR encoder preset (x265)  -->
+      <StackPanel Spacing="6">
+        <TextBlock FontSize="20" Text="{x:Bind lang:Lang.RecordingSetting_EncoderPreset}" />
+        <TextBlock
+          FontSize="12"
+          Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+          Text="{x:Bind lang:Lang.RecordingSetting_EncoderPresetDesc}"
+          TextWrapping="Wrap"
+        />
+        <ComboBox Width="420" SelectedIndex="{x:Bind EncoderPresetIndex, Mode=TwoWay}">
+          <ComboBoxItem Content="ultrafast" />
+          <ComboBoxItem Content="superfast" />
+          <ComboBoxItem Content="veryfast" />
+          <ComboBoxItem Content="faster" />
+          <ComboBoxItem Content="fast" />
+          <ComboBoxItem Content="medium" />
+        </ComboBox>
+      </StackPanel>
+
+      <!--  Target FPS cap (free input; frames are dropped before readback/convert/encode,
+            so a lower cap cuts CPU + file size; empty or 0 = native refresh)  -->
+      <StackPanel Spacing="6">
+        <TextBlock FontSize="20" Text="{x:Bind lang:Lang.RecordingSetting_TargetFps}" />
+        <TextBlock
+          FontSize="12"
+          Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+          Text="{x:Bind lang:Lang.RecordingSetting_TargetFpsDesc}"
+          TextWrapping="Wrap"
+        />
+        <TextBox
+          Width="420"
+          PlaceholderText="0 = Auto"
+          Text="{x:Bind TargetFpsText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+        />
+        <TextBlock
+          FontSize="12"
+          Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+          Text="{x:Bind lang:Lang.RecordingSetting_TargetFpsInvalid}"
+          Visibility="{x:Bind TargetFpsErrorVisible}"
+        />
+      </StackPanel>
+
+      <!--  Target bitrate (ABR; free input in Mbps; empty or 0 = off -> CRF quality mode)  -->
+      <StackPanel Spacing="6">
+        <TextBlock FontSize="20" Text="{x:Bind lang:Lang.RecordingSetting_Bitrate}" />
+        <TextBlock
+          FontSize="12"
+          Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+          Text="{x:Bind lang:Lang.RecordingSetting_BitrateDesc}"
+          TextWrapping="Wrap"
+        />
+        <TextBox
+          Width="420"
+          PlaceholderText="0 = Auto"
+          Text="{x:Bind BitrateText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+        />
+        <TextBlock
+          FontSize="12"
+          Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+          Text="{x:Bind lang:Lang.RecordingSetting_BitrateInvalid}"
+          Visibility="{x:Bind BitrateErrorVisible}"
+        />
+      </StackPanel>
+
+      <!--  采集系统声音  -->
+      <StackPanel Spacing="6">
+        <ToggleSwitch
+          IsOn="{x:Bind CaptureAudio, Mode=TwoWay}"
+          OffContent="{x:Bind lang:Lang.RecordingSetting_CaptureAudio}"
+          OnContent="{x:Bind lang:Lang.RecordingSetting_CaptureAudio}"
+        />
+        <TextBlock
+          FontSize="12"
+          Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+          Text="{x:Bind lang:Lang.RecordingSetting_CaptureAudioDesc}"
+          TextWrapping="Wrap"
+        />
+      </StackPanel>
+
+      <!--  Post-encode (raw buffer to disk, encode after stop)  -->
+      <StackPanel Spacing="6">
+        <ToggleSwitch
+          IsOn="{x:Bind PostEncode, Mode=TwoWay}"
+          OffContent="{x:Bind lang:Lang.RecordingSetting_PostEncode}"
+          OnContent="{x:Bind lang:Lang.RecordingSetting_PostEncode}"
+        />
+        <TextBlock
+          FontSize="12"
+          Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+          Text="{x:Bind lang:Lang.RecordingSetting_PostEncodeDesc}"
+          TextWrapping="Wrap"
+        />
+      </StackPanel>
+
+      <!--  Fast-convert (HDR only: smaller PQ LUT, faster CPU, +-1 code)  -->
+      <StackPanel Spacing="6">
+        <ToggleSwitch
+          IsOn="{x:Bind FastConvert, Mode=TwoWay}"
+          OffContent="{x:Bind lang:Lang.RecordingSetting_FastConvert}"
+          OnContent="{x:Bind lang:Lang.RecordingSetting_FastConvert}"
+        />
+        <TextBlock
+          FontSize="12"
+          Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+          Text="{x:Bind lang:Lang.RecordingSetting_FastConvertDesc}"
+          TextWrapping="Wrap"
+        />
+      </StackPanel>
+
+      <!--  HDR convert kernel (advanced: Auto = widest SIMD the CPU has; A/B lever)  -->
+      <StackPanel Spacing="6">
+        <TextBlock FontSize="20" Text="{x:Bind lang:Lang.RecordingSetting_SimdKernel}" />
+        <TextBlock
+          FontSize="12"
+          Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+          Text="{x:Bind lang:Lang.RecordingSetting_SimdKernelDesc}"
+          TextWrapping="Wrap"
+        />
+        <ComboBox Width="420" SelectedIndex="{x:Bind SimdKernelIndex, Mode=TwoWay}">
+          <ComboBoxItem Content="Auto" />
+          <ComboBoxItem Content="AVX-512 (16 px)" />
+          <ComboBoxItem Content="AVX2 wide (16 px, batched gathers) (recommended)" />
+          <ComboBoxItem Content="AVX2 (8 px, baseline)" />
+          <ComboBoxItem Content="AVX2 fast (8 px, gather-reduce)" />
+          <ComboBoxItem Content="Scalar" />
+        </ComboBox>
+      </StackPanel>
+
+      <!--  Convert workers (advanced: row-pool size; A/B lever)  -->
+      <StackPanel Spacing="6">
+        <TextBlock FontSize="20" Text="{x:Bind lang:Lang.RecordingSetting_WorkerCount}" />
+        <TextBlock
+          FontSize="12"
+          Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+          Text="{x:Bind lang:Lang.RecordingSetting_WorkerCountDesc}"
+          TextWrapping="Wrap"
+        />
+        <ComboBox Width="420" SelectedIndex="{x:Bind WorkerCountIndex, Mode=TwoWay}">
+          <ComboBoxItem Content="Auto" />
+          <ComboBoxItem Content="8" />
+          <ComboBoxItem Content="16 (recommended)" />
+          <ComboBoxItem Content="32" />
+          <ComboBoxItem Content="48" />
+          <ComboBoxItem Content="64" />
+        </ComboBox>
+      </StackPanel>
+
+      <!--  Raw buffer folder (post-encode only)  -->
+      <StackPanel Spacing="6" Visibility="{x:Bind RawBufferVisible}">
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <TextBlock
+            VerticalAlignment="Center"
+            FontSize="20"
+            Text="{x:Bind lang:Lang.RecordingSetting_RawBufferDir}"
+          />
+          <Button
+            HorizontalAlignment="Left"
+            Click="Button_ChangeRawBufferDir_Click"
+            Content="{x:Bind lang:Lang.Starshot_Change}"
+          />
+        </StackPanel>
+        <TextBlock
+          FontSize="12"
+          Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+          Text="{x:Bind lang:Lang.RecordingSetting_RawBufferDirDesc}"
+          TextWrapping="Wrap"
+        />
+        <TextBlock
+          FontSize="14"
+          Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+          Text="{x:Bind RawBufferDir}"
+          TextTrimming="CharacterEllipsis"
+        />
+      </StackPanel>
+
+      <!--  录音设备  -->
+      <StackPanel Spacing="12">
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <TextBlock
+            VerticalAlignment="Center"
+            FontSize="20"
+            Text="{x:Bind lang:Lang.RecordingSetting_AudioDevice}"
+          />
+          <Button
+            HorizontalAlignment="Left"
+            Click="Button_RefreshDevices_Click"
+            Content="{x:Bind lang:Lang.RecordingSetting_RefreshDevices}"
+          />
+        </StackPanel>
+        <TextBlock
+          FontSize="12"
+          Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+          Text="{x:Bind lang:Lang.RecordingSetting_AudioDeviceDesc}"
+          TextWrapping="Wrap"
+        />
+        <ComboBox
+          Width="420"
+          DisplayMemberPath="DisplayText"
+          IsEnabled="{x:Bind CaptureAudio}"
+          ItemsSource="{x:Bind AudioDevices}"
+          SelectedItem="{x:Bind SelectedAudioDevice, Mode=TwoWay}"
+        />
+      </StackPanel>
+    </StackPanel>
+  </ScrollViewer>
+</sf:PageBase>

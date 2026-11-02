@@ -1096,6 +1096,222 @@ namespace Starshot.Language {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Audio device.
+        /// </summary>
+        public static string RecordingSetting_AudioDevice {
+            get {
+                return ResourceManager.GetString("RecordingSetting_AudioDevice", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The playback device whose audio mix is captured. Keep System default unless recordings come out silent — some virtual mixers forward audio to your real device but expose a silent loopback, so pick the speakers/headphones you actually hear..
+        /// </summary>
+        public static string RecordingSetting_AudioDeviceDesc {
+            get {
+                return ResourceManager.GetString("RecordingSetting_AudioDeviceDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Bitrate.
+        /// </summary>
+        public static string RecordingSetting_Bitrate {
+            get {
+                return ResourceManager.GetString("RecordingSetting_Bitrate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Target video bitrate in Mbps (ABR mode). Leave the field empty (or enter 0) to use quality-driven CRF instead, so the file size varies with content. A fixed bitrate keeps the file near bitrate x duration — lower values shrink the file at a quality cost. Applies to both SDR (H.264) and HDR (HEVC) recordings..
+        /// </summary>
+        public static string RecordingSetting_BitrateDesc {
+            get {
+                return ResourceManager.GetString("RecordingSetting_BitrateDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enter a number between 0.1 and 1000 (or leave the field empty / 0 for CRF quality mode)..
+        /// </summary>
+        public static string RecordingSetting_BitrateInvalid {
+            get {
+                return ResourceManager.GetString("RecordingSetting_BitrateInvalid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Capture system audio.
+        /// </summary>
+        public static string RecordingSetting_CaptureAudio {
+            get {
+                return ResourceManager.GetString("RecordingSetting_CaptureAudio", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Records the system audio mix (WASAPI loopback, AAC track) into your recordings..
+        /// </summary>
+        public static string RecordingSetting_CaptureAudioDesc {
+            get {
+                return ResourceManager.GetString("RecordingSetting_CaptureAudioDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Encoder speed (HDR).
+        /// </summary>
+        public static string RecordingSetting_EncoderPreset {
+            get {
+                return ResourceManager.GetString("RecordingSetting_EncoderPreset", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Preset for the HDR (HEVC 10-bit) encoder (x265). Faster presets use less CPU and hold higher frame rates but write larger files; slower presets compress harder for smaller files but can limit the achievable frame rate (at 4K, anything slower than veryfast becomes the bottleneck). SDR (H.264) recordings always use a fast preset and are not affected..
+        /// </summary>
+        public static string RecordingSetting_EncoderPresetDesc {
+            get {
+                return ResourceManager.GetString("RecordingSetting_EncoderPresetDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Fast HDR conversion.
+        /// </summary>
+        public static string RecordingSetting_FastConvert {
+            get {
+                return ResourceManager.GetString("RecordingSetting_FastConvert", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Uses a smaller, faster color lookup table and simplified chroma math for HDR recordings, lowering CPU usage. Slightly less accurate than the exact mode (up to 1 luma code / 2-3 chroma codes out of 1024, not visible in practice). Off = bit-for-bit exact..
+        /// </summary>
+        public static string RecordingSetting_FastConvertDesc {
+            get {
+                return ResourceManager.GetString("RecordingSetting_FastConvertDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Encode after stopping.
+        /// </summary>
+        public static string RecordingSetting_PostEncode {
+            get {
+                return ResourceManager.GetString("RecordingSetting_PostEncode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Captures at full frame rate and writes the frames to disk raw; the actual encode runs in the background after you stop. This keeps the capture at the display&apos;s frame rate even when the encoder cannot keep up (e.g. 60 fps at 4K), at the cost of raw disk space (4K HDR 60 fps writes about 1.4 GB/s, roughly 84 GB per minute) and a wait for the final file (about 5x the clip length at 4K)..
+        /// </summary>
+        public static string RecordingSetting_PostEncodeDesc {
+            get {
+                return ResourceManager.GetString("RecordingSetting_PostEncodeDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Raw buffer folder.
+        /// </summary>
+        public static string RecordingSetting_RawBufferDir {
+            get {
+                return ResourceManager.GetString("RecordingSetting_RawBufferDir", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Where the raw capture buffer is written while recording (default: the recordings folder). The final MP4 is still saved to the recordings folder. Use a fast NVMe for 4K recordings..
+        /// </summary>
+        public static string RecordingSetting_RawBufferDirDesc {
+            get {
+                return ResourceManager.GetString("RecordingSetting_RawBufferDirDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Refresh.
+        /// </summary>
+        public static string RecordingSetting_RefreshDevices {
+            get {
+                return ResourceManager.GetString("RecordingSetting_RefreshDevices", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to HDR convert kernel.
+        /// </summary>
+        public static string RecordingSetting_SimdKernel {
+            get {
+                return ResourceManager.GetString("RecordingSetting_SimdKernel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SIMD kernel for the HDR frame conversion. Auto picks the widest SIMD this CPU supports; the fixed entries are benchmarking/A-B levers (see performance.md). The wide kernels process 16 pixels per iteration with front-loaded memory parallelism and measured fastest on modern CPUs..
+        /// </summary>
+        public static string RecordingSetting_SimdKernelDesc {
+            get {
+                return ResourceManager.GetString("RecordingSetting_SimdKernelDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to System default.
+        /// </summary>
+        public static string RecordingSetting_SystemDefault {
+            get {
+                return ResourceManager.GetString("RecordingSetting_SystemDefault", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Target FPS.
+        /// </summary>
+        public static string RecordingSetting_TargetFps {
+            get {
+                return ResourceManager.GetString("RecordingSetting_TargetFps", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Caps the recording frame rate. Dropped frames are skipped before the CPU-heavy readback/convert/encode steps, so a lower cap cuts CPU usage and file size (e.g. 15 when the display delivers 60). Leave the field empty (or enter 0) to follow the display&apos;s native refresh..
+        /// </summary>
+        public static string RecordingSetting_TargetFpsDesc {
+            get {
+                return ResourceManager.GetString("RecordingSetting_TargetFpsDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enter a whole number between 1 and 240 (or leave the field empty / 0 for native refresh)..
+        /// </summary>
+        public static string RecordingSetting_TargetFpsInvalid {
+            get {
+                return ResourceManager.GetString("RecordingSetting_TargetFpsInvalid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Convert workers.
+        /// </summary>
+        public static string RecordingSetting_WorkerCount {
+            get {
+                return ResourceManager.GetString("RecordingSetting_WorkerCount", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Row-pool worker count for the frame conversion. Auto = min(rows, logical processors). Fewer workers can beat more on cache-poor CPUs, so tune the count if you notice conversion stalls..
+        /// </summary>
+        public static string RecordingSetting_WorkerCountDesc {
+            get {
+                return ResourceManager.GetString("RecordingSetting_WorkerCountDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Check the log for more information..
         /// </summary>
         public static string ScreenCaptureInfoWindow_CheckTheLogForMoreInformation {
@@ -2212,6 +2428,60 @@ namespace Starshot.Language {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Record Full Screen.
+        /// </summary>
+        public static string Starshot_HotkeyRecordFull {
+            get {
+                return ResourceManager.GetString("Starshot_HotkeyRecordFull", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Records the monitor of the foreground window (or cursor screen) to an MP4 in the screenshot folder. Press again to stop..
+        /// </summary>
+        public static string Starshot_HotkeyRecordFullDesc {
+            get {
+                return ResourceManager.GetString("Starshot_HotkeyRecordFullDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Record Region.
+        /// </summary>
+        public static string Starshot_HotkeyRecordRegion {
+            get {
+                return ResourceManager.GetString("Starshot_HotkeyRecordRegion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Drag a region to record it as an MP4. The region must stay within a single display. Press again to stop..
+        /// </summary>
+        public static string Starshot_HotkeyRecordRegionDesc {
+            get {
+                return ResourceManager.GetString("Starshot_HotkeyRecordRegionDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Record Window.
+        /// </summary>
+        public static string Starshot_HotkeyRecordWindow {
+            get {
+                return ResourceManager.GetString("Starshot_HotkeyRecordWindow", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Records the foreground window to an MP4. Press again to stop..
+        /// </summary>
+        public static string Starshot_HotkeyRecordWindowDesc {
+            get {
+                return ResourceManager.GetString("Starshot_HotkeyRecordWindowDesc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Region Capture.
         /// </summary>
         public static string Starshot_HotkeyRegion {
@@ -2500,6 +2770,15 @@ namespace Starshot.Language {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Recording.
+        /// </summary>
+        public static string Starshot_Nav_Recording {
+            get {
+                return ResourceManager.GetString("Starshot_Nav_Recording", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Screenshot.
         /// </summary>
         public static string Starshot_Nav_Screenshot {
@@ -2586,6 +2865,96 @@ namespace Starshot.Language {
         public static string Starshot_Quality {
             get {
                 return ResourceManager.GetString("Starshot_Quality", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Video encoders are not available (recording is only shipped for x64).
+        /// </summary>
+        public static string Starshot_RecordingCodecUnavailable {
+            get {
+                return ResourceManager.GetString("Starshot_RecordingCodecUnavailable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Recording Failed.
+        /// </summary>
+        public static string Starshot_RecordingFailed {
+            get {
+                return ResourceManager.GetString("Starshot_RecordingFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No foreground window to record.
+        /// </summary>
+        public static string Starshot_RecordingNoForeground {
+            get {
+                return ResourceManager.GetString("Starshot_RecordingNoForeground", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Record Region.
+        /// </summary>
+        public static string Starshot_RecordingRegion {
+            get {
+                return ResourceManager.GetString("Starshot_RecordingRegion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The region must be entirely within a single display.
+        /// </summary>
+        public static string Starshot_RecordingRegionSpansDisplays {
+            get {
+                return ResourceManager.GetString("Starshot_RecordingRegionSpansDisplays", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Recording Saved.
+        /// </summary>
+        public static string Starshot_RecordingSaved {
+            get {
+                return ResourceManager.GetString("Starshot_RecordingSaved", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Record Screen.
+        /// </summary>
+        public static string Starshot_RecordingScreen {
+            get {
+                return ResourceManager.GetString("Starshot_RecordingScreen", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Stop Recording  {0}.
+        /// </summary>
+        public static string Starshot_RecordingStop {
+            get {
+                return ResourceManager.GetString("Starshot_RecordingStop", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Record Window.
+        /// </summary>
+        public static string Starshot_RecordingWindow {
+            get {
+                return ResourceManager.GetString("Starshot_RecordingWindow", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The foreground window is minimized and cannot be recorded.
+        /// </summary>
+        public static string Starshot_RecordingWindowMinimized {
+            get {
+                return ResourceManager.GetString("Starshot_RecordingWindowMinimized", resourceCulture);
             }
         }
         

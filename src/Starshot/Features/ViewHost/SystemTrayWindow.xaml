@@ -78,6 +78,69 @@
           <TextBlock VerticalAlignment="Center" Text="{x:Bind lang:Lang.ImageViewWindow_Ocr}" />
         </StackPanel>
       </Button>
+      <Button
+        Height="36"
+        HorizontalAlignment="Stretch"
+        HorizontalContentAlignment="Left"
+        Command="{x:Bind RecordFullCommand}"
+        Style="{ThemeResource DateTimePickerFlyoutButtonStyle}"
+      >
+        <StackPanel Orientation="Horizontal" Spacing="12">
+          <fluent:SymbolIcon FontSize="16" Symbol="Video" />
+          <TextBlock
+            VerticalAlignment="Center"
+            Text="{x:Bind lang:Lang.Starshot_RecordingScreen}"
+          />
+        </StackPanel>
+      </Button>
+      <Button
+        Height="36"
+        HorizontalAlignment="Stretch"
+        HorizontalContentAlignment="Left"
+        Command="{x:Bind RecordRegionCommand}"
+        Style="{ThemeResource DateTimePickerFlyoutButtonStyle}"
+      >
+        <StackPanel Orientation="Horizontal" Spacing="12">
+          <fluent:SymbolIcon FontSize="16" Symbol="Crop" />
+          <TextBlock
+            VerticalAlignment="Center"
+            Text="{x:Bind lang:Lang.Starshot_RecordingRegion}"
+          />
+        </StackPanel>
+      </Button>
+      <Button
+        Height="36"
+        HorizontalAlignment="Stretch"
+        HorizontalContentAlignment="Left"
+        Command="{x:Bind RecordWindowCommand}"
+        Style="{ThemeResource DateTimePickerFlyoutButtonStyle}"
+      >
+        <StackPanel Orientation="Horizontal" Spacing="12">
+          <fluent:SymbolIcon FontSize="16" Symbol="Window" />
+          <TextBlock
+            VerticalAlignment="Center"
+            Text="{x:Bind lang:Lang.Starshot_RecordingWindow}"
+          />
+        </StackPanel>
+      </Button>
+      <Button
+        x:Name="StopRecordButton"
+        Height="36"
+        HorizontalAlignment="Stretch"
+        HorizontalContentAlignment="Left"
+        Command="{x:Bind StopRecordCommand}"
+        Style="{ThemeResource DateTimePickerFlyoutButtonStyle}"
+        Visibility="Collapsed"
+      >
+        <StackPanel Orientation="Horizontal" Spacing="12">
+          <fluent:SymbolIcon FontSize="16" Symbol="Stop" />
+          <TextBlock
+            VerticalAlignment="Center"
+            Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+            Text="{x:Bind StopRecordText, Mode=OneWay}"
+          />
+        </StackPanel>
+      </Button>
       <MenuFlyoutSeparator />
       <Button
         Height="36"

@@ -682,6 +682,159 @@ internal class ScreenCaptureService
         }
     }
 
+    // ==================== 区域录制选区 ====================
+
+    /// <summary>
+    /// 复用区域截图覆盖层让用户框选一块区域（区域录制的静态选区，无实时预览），
+    /// 返回选区（虚拟屏幕物理像素，原点=虚拟屏幕左上角）；取消/太小返回 null。
+    /// 调用方负责判断选区是否落在单一显示器内。
+    /// </summary>
+    public static async Task<Windows.Foundation.Rect?> SelectRecordingRegionAsync()
+    {
+        // 不能 ConfigureAwait(false)：选区覆盖层 (XAML Window) 必须在 UI 线程构造，
+        // 与 CaptureRegionInternal 的线程语义一致（调用方从 UI 线程发起）
+        return await Instance.SelectRecordingRegionInternalAsync();
+    }
+
+    private async Task<Windows.Foundation.Rect?> SelectRecordingRegionInternalAsync()
+    {
+        // 虚拟屏幕边界（物理像素）
+        int vx = User32.GetSystemMetrics((User32.SystemMetric)76);
+        int vy = User32.GetSystemMetrics((User32.SystemMetric)77);
+        int vw = User32.GetSystemMetrics((User32.SystemMetric)78);
+        int vh = User32.GetSystemMetrics((User32.SystemMetric)79);
+        if (vw <= 0 || vh <= 0)
+            return null;
+
+        var displays = DisplayArea.FindAll();
+        if (displays.Count == 0)
+            return null;
+
+        // 与区域截图同款：逐屏 HDR 标志 + float/8-bit 分支 + SDR 白电平
+        bool anyHDR = false;
+        var isHdrDisplay = new bool[displays.Count];
+        for (int i = 0; i < displays.Count; i++)
+        {
+            using var di = DisplayInformation.CreateForDisplayId(displays[i].DisplayId);
+            if (
+                di.GetAdvancedColorInfo().CurrentAdvancedColorKind
+                is DisplayAdvancedColorKind.HighDynamicRange
+            )
+            {
+                isHdrDisplay[i] = true;
+                anyHDR = true;
+            }
+        }
+        var pixelFormat = anyHDR
+            ? DirectXPixelFormat.R16G16B16A16Float
+            : DirectXPixelFormat.R8G8B8A8UIntNormalized;
+        float sdrWhiteLevel = anyHDR ? AppConfig.GetSdrWhiteLevelFromDisplays(displays) : 80;
+
+        // 并行捕获所有显示器 → 合成到虚拟屏幕大小的 composite（与区域截图同源）
+        var device = CanvasDevice.GetSharedDevice();
+        var captureTasks = new Task<(
+            int ox,
+            int oy,
+            CanvasBitmap bmp,
+            bool isHDR,
+            Direct3D11CaptureFrame frame
+        )>[displays.Count];
+        for (int i = 0; i < displays.Count; i++)
+        {
+            var d = displays[i];
+            var bounds = d.OuterBounds;
+            int ox = bounds.X - vx;
+            int oy = bounds.Y - vy;
+            bool isHDR = isHdrDisplay[i];
+            captureTasks[i] = Task.Run(async () =>
+            {
+                var frame = await ScreenCaptureHelper.CaptureMonitorAsync(
+                    (nint)d.DisplayId.Value,
+                    pixelFormat
+                );
+                var bmp = CanvasBitmap.CreateFromDirect3D11Surface(device, frame.Surface, 96);
+                return (ox, oy, bmp, isHDR, frame);
+            });
+        }
+        (int ox, int oy, CanvasBitmap bmp, bool isHDR, Direct3D11CaptureFrame frame)[] results;
+        try
+        {
+            // 不 ConfigureAwait(false)：恢复回 UI 线程，后面的覆盖层窗口构造依赖它
+            results = await Task.WhenAll(captureTasks);
+        }
+        catch
+        {
+            foreach (var t in captureTasks)
+            {
+                if (t.Status == TaskStatus.RanToCompletion)
+                {
+                    t.Result.bmp.Dispose();
+                    t.Result.frame.Dispose();
+                }
+            }
+            return null;
+        }
+
+        var composite = new CanvasRenderTarget(
+            device,
+            vw,
+            vh,
+            96,
+            pixelFormat,
+            CanvasAlphaMode.Premultiplied
+        );
+        for (int i = 0; i < results.Length; i++)
+        {
+            var r = results[i];
+            using (var ds = composite.CreateDrawingSession())
+            {
+                if (anyHDR && !r.isHDR && sdrWhiteLevel != 80)
+                {
+                    var wle = new WhiteLevelAdjustmentEffect
+                    {
+                        Source = r.bmp,
+                        InputWhiteLevel = sdrWhiteLevel,
+                        OutputWhiteLevel = 80,
+                        BufferPrecision = CanvasBufferPrecision.Precision16Float,
+                    };
+                    ds.DrawImage(wle, r.ox, r.oy);
+                }
+                else
+                {
+                    ds.DrawImage(r.bmp, r.ox, r.oy);
+                }
+            }
+            r.bmp.Dispose();
+            r.frame.Dispose();
+        }
+
+        try
+        {
+            if (_regionWindow is null || _regionWindow.IsDestroyed)
+            {
+                _regionWindow = new RegionCaptureWindow();
+            }
+            _regionWindow.SetCapture(composite, sdrWhiteLevel, vw, vh);
+            bool confirmed = await _regionWindow.Completion.Task;
+            if (
+                !confirmed
+                || _regionWindow.SelectionRect.Width < 2
+                || _regionWindow.SelectionRect.Height < 2
+            )
+            {
+                return null;
+            }
+            // 虚拟屏幕物理像素（原点=虚拟屏幕左上角）
+            return _regionWindow.GetPhysicalSourceRect();
+        }
+        finally
+        {
+            // 录制路径不用 SdrCrop（确认时覆盖层裁出的 SDR 副本），不释放会钉住整块 composite
+            _regionWindow?.SdrCrop?.Dispose();
+            composite.Dispose();
+        }
+    }
+
     // ==================== 共用保存管线 ====================
 
     private async Task SaveCaptureAsync(

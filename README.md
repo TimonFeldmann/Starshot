@@ -396,6 +396,75 @@ dotnet publish src/Starshot/Starshot.csproj -c Release -p:Platform=x64
 #     *.dll / avifenc.exe etc.
 ```
 
+### Integration tests (HDR recording)
+
+`src/Starshot.Tests` contains an opt-in, machine-dependent XUnit integration test
+(category `HdrRecording`) that drives the real HDR recording pipeline end to end:
+
+1. The C++ signal host (`tools/HdrSignalHost/hdr-signal.exe`, built by `build.ps1`) renders
+   N-nit BT.2020 flat fields in a borderless window covering the target monitor — a
+   player-free, fully controllable HDR stimulus. Four phases — GREEN/RED/BLUE/YELLOW,
+   `STARSHOT_HDR_PHASE_SECONDS` each (default 5 s, clamped to 2 s..300 s; `4 x phase` total);
+   a WGC session-init eats the first ~2-3 s of a recording, but the default 5 s phases still
+   leave each color with classifiable frames.
+2. One `windowfg` recording (the user's real window-recording path) of 4 x phase from t0 is
+   taken through `Starshot.exe --record-test`, its frames are decoded at the source rate with
+   ffmpeg (no resampling - WGC's sparse, jittery delivery would alias a 1 fps bucket
+   sampling), classified frame by frame, and each color's longest segment is compared
+   against the analytic ST 2084 + BT.2020 ground truth (±6 codes). Rows: 4K/10000 nits
+   (ground truth), 1440p/10000 (control), 4K/5000 and 4K/240 (midtones).
+
+```bash
+dotnet test src/Starshot.Tests
+```
+
+Phase length: each color plays `STARSHOT_HDR_PHASE_SECONDS` seconds (one value for all
+four colors; default 5, clamped to 2 s..300 s) and the recording window scales with it
+(4 x phase). `scripts/run-hdr-test.ps1` asks for the value (empty answer keeps 5; pass
+`-PhaseSeconds` to skip the question) and exports it for you (in play-only mode every
+color, GREEN included, plays for it).
+
+Keyboard control while the user watches the panel (global keys, no console focus needed):
+ESC ends the suite (the active row is interrupted + cleaned up and the remaining rows
+skip); Space toggles a pause - the active row freezes in place (the signal host holds the
+current color, window and all, with its countdown stopped, and the record-test capture
+holds its duration budget) and resumes from exactly where it stopped when Space is pressed
+again. The host is retired right after each recording, so the panel is dark during
+post-processing; a pause then simply holds the next row. `scripts/run-hdr-test.ps1`
+prints each pause / resume / stop, so a paused suite is distinguishable from a hung one.
+
+A play-only variant (`HdrFlatFieldPlay`, same category) paints the 4K/10000-nit fields on the
+panel for `STARSHOT_HDR_PLAY_SECONDS` (default 120 s, clamped to 15 s..1 h) and takes **no**
+recording, so you can capture them with your own manual recording without the automated
+record-test getting in the way. Unlike the recording rows it never kills your running
+`Starshot` instance - launch the app while the fields are up and record (the opening
+GREEN plays for the chosen phase length, and the fields stay up for the whole play
+window; the host self-clears afterwards, even if the test is interrupted). Space freezes the fields on the current color (the window stays up) and
+extends the play window by the held time. Provisioning clears stale processes up front, so
+start the app once the color
+fields appear on the panel - the fields themselves are the cue (the test's `[hdr-play]`
+console line, if your runner shows it, says the same thing):
+
+```bash
+$env:STARSHOT_HDR_PLAY_SECONDS = 120
+dotnet test src/Starshot.Tests --filter "FullyQualifiedName~HdrFlatFieldPlay"
+```
+
+`scripts/run-hdr-test.ps1` wraps both modes: it asks whether to launch the HDR test with
+or without the automatic recording (or take `-Mode WithRecording` / `-Mode PlayOnly`).
+
+The test is self-skipping: it needs a Windows HDR display for the row's panel resolution,
+the encoder DLLs in `build/codecs/` (see `tools/codecs/build-codecs.ps1`), and ffmpeg +
+ffprobe (`STARSHOT_TEST_FFMPEG_DIR`, a gitignored `tools/ffmpeg/bin/` local copy, or
+PATH). On a machine without those
+prerequisites a plain `dotnet test` skips it — no user interaction, no video player, no
+F-key toggles. Note the recording rows clear any stale `hdr-signal` process and briefly
+foreground the signal window before each recording; a running `Starshot` instance is left
+alone (its headless record-test child runs alongside it) - just keep it unfocused during a
+row, since the capture follows the foreground window (the play-only test only clears a
+stale `hdr-signal`). While `Starshot` is running the suite reuses `build/app` instead of
+rebuilding (a running app locks the build output). See `tools/HdrSignalHost/README.md`.
+
 ## Internationalization (i18n)
 
 Translations are based on `.resx` resource files under `src/Starshot.Language/` (`Lang.resx` is the English default; `Lang.zh-CN.resx` etc. are per-locale). You also need to add an option to the language ComboBox in `GeneralSetting` + its `LanguageIndex` mapping.

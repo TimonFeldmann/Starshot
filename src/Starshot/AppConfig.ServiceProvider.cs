@@ -91,6 +91,7 @@ public static partial class AppConfig
             sc.AddLogging(c => c.AddSerilog(Log.Logger));
 
             sc.AddSingleton<ScreenCaptureService>();
+            sc.AddSingleton<Starshot.Features.Recording.VideoRecordService>();
 
             _serviceProvider = sc.BuildServiceProvider();
         }

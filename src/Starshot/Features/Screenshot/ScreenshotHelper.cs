@@ -17,11 +17,22 @@ internal static class ScreenshotHelper
                 or ".webp"
                 or ".heic"
                 or ".avif"
-                or ".jxl";
+                or ".jxl"
+                or ".mp4";
     }
 
     public static List<string> WatcherFilters { get; } =
-        new List<string> { "*.jpg", "*.png", "*.jxr", "*.webp", "*.heic", "*.avif", "*.jxl" };
+        new List<string>
+        {
+            "*.jpg",
+            "*.png",
+            "*.jxr",
+            "*.webp",
+            "*.heic",
+            "*.avif",
+            "*.jxl",
+            "*.mp4",
+        };
 
     public static async Task WaitForFileReleaseAsync(
         string filePath,

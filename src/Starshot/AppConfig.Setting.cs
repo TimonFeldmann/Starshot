@@ -574,6 +574,196 @@ public static partial class AppConfig
     }
 
     /// <summary>
+    /// 录全屏快捷键（开关：再按停止；录制中按任意录制热键 = 停止）
+    /// </summary>
+    public static string? VideoRecordFullHotkey
+    {
+        // Alt + R
+        get => GetValue("1+82");
+        set => SetValue(value);
+    }
+
+    /// <summary>
+    /// 录区域快捷键（先框选区域再开始录制；开关语义同上）
+    /// </summary>
+    public static string? VideoRecordRegionHotkey
+    {
+        // Alt + T
+        get => GetValue("1+84");
+        set => SetValue(value);
+    }
+
+    /// <summary>
+    /// 录窗口快捷键（录前台窗口；开关语义同上）
+    /// </summary>
+    public static string? VideoRecordWindowHotkey
+    {
+        // Alt + Y
+        get => GetValue("1+89");
+        set => SetValue(value);
+    }
+
+    /// <summary>
+    /// Legacy hidden FPS-cap ladder (0 = native refresh, 1 = 60 fps, 2 = 30 fps),
+    /// superseded by VideoRecordTargetFps: honored only while TargetFps is 0.
+    /// </summary>
+    public static int VideoRecordFpsMode
+    {
+        get => GetValue(0);
+        set => SetValue(value);
+    }
+
+    /// <summary>
+    /// Recording target FPS cap (Recording settings "Target FPS"; 0 = native display
+    /// refresh, otherwise the capture pump drops frames before readback/convert/encode,
+    /// which cuts CPU usage and file size). Supersedes the legacy VideoRecordFpsMode
+    /// ladder (honored only while this is 0).
+    /// </summary>
+    public static int VideoRecordTargetFps
+    {
+        get => GetValue(0);
+        set => SetValue(value);
+    }
+
+    /// <summary>
+    /// Recording target video bitrate in kb/s (Recording settings "Bitrate"; 0 = off,
+    /// quality-driven CRF mode). When set, both encoders run in ABR mode and the file
+    /// size lands near bitrate x duration.
+    /// </summary>
+    public static int VideoRecordBitrateKbps
+    {
+        get => GetValue(0);
+        set => SetValue(value);
+    }
+
+    /// <summary>
+    /// 录制质量（CRF 风格，越高文件越小）：0=高, 1=中(默认), 2=低
+    /// </summary>
+    public static int VideoRecordQuality
+    {
+        get => GetValue(1);
+        set => SetValue(value);
+    }
+
+    /// <summary>
+    /// HDR recording (x265) encoder preset — the x265 speed ladder; smaller index
+    /// = faster encoding / larger files, larger index = smaller files / slower:
+    /// 0=ultrafast (default, holds the highest fps), 1=superfast, 2=veryfast,
+    /// 3=faster, 4=fast, 5=medium (at 4K anything below ultrafast limits fps).
+    /// SDR (x264) recording is fixed to veryfast and is not affected by this.
+    /// </summary>
+    public static int VideoRecordEncoderPreset
+    {
+        get => GetValue(0);
+        set => SetValue(value);
+    }
+
+    /// <summary>
+    /// 录制 HDR 处理：0=自动（HDR 模式显示器录 HDR10，HEVC 10-bit）, 1=强制 SDR
+    /// </summary>
+    public static int VideoRecordHdrMode
+    {
+        get => GetValue(0);
+        set => SetValue(value);
+    }
+
+    /// <summary>
+    /// 录制是否采集系统声音（WASAPI 回环 → AAC）
+    /// </summary>
+    public static bool VideoRecordAudioEnabled
+    {
+        get => GetValue(true);
+        set => SetValue(value);
+    }
+
+    /// <summary>
+    /// 录制音频采集设备：MMDevice ID（WASAPI 回环源），null/空 = 跟随 Windows 默认播放设备。
+    /// 某些虚拟设备回环静音，实际声音在别的设备上，
+    /// 录制无声时可选到真正出声的扬声器/耳机。
+    /// </summary>
+    public static string? VideoRecordAudioDeviceId
+    {
+        get => GetValue<string>();
+        set => SetValue(value);
+    }
+
+    /// <summary>
+    /// 录制完成后是否定位到视频文件（资源管理器 /select）
+    /// </summary>
+    public static bool VideoRecordOpenFolderAfterStop
+    {
+        get => GetValue(false);
+        set => SetValue(value);
+    }
+
+    /// <summary>
+    /// Recording HDR conversion "fast" mode: a smaller 80 KB hybrid PQ LUT + reciprocal
+    /// chroma math (default off = bit-exact). Accuracy: luma +-1 code, chroma +-2..3
+    /// codes (inside the HDR suite tolerance bands), in exchange for slightly lower
+    /// conversion cost.
+    /// </summary>
+    public static bool VideoRecordFastConvert
+    {
+        get => GetValue(false);
+        set => SetValue(value);
+    }
+
+    /// <summary>
+    /// Recording HDR conversion SIMD kernel (0 = Auto: the widest SIMD the CPU has,
+    /// 1 = AVX-512 16-px, 2 = AVX2 wide 16-px batched, 3 = AVX2 8-px 3-gather baseline,
+    /// 4 = AVX2 8-px gather-reduction, 5 = scalar). Default 2 (AVX2 wide): the fastest
+    /// measured on a 16c Zen 5 test CPU, where even the Auto pick (AVX-512) is slower;
+    /// Auto stays available for other CPUs. A/b probe: the STARSHOT_WGC_SIMD env var
+    /// overrides this (see performance.md).
+    /// </summary>
+    public static int VideoRecordSimdKernel
+    {
+        get => GetValue(2);
+        set => SetValue(value);
+    }
+
+    /// <summary>
+    /// Recording frame-conversion row-pool worker count (0 = Auto: min(rows, logical
+    /// processors)). Default 16: the wide kernel's measured optimum on a 16c Zen 5
+    /// test CPU (beyond ~16 the shared-LUT/L2 contention dominates); Auto stays
+    /// available. Fewer workers can beat more on cache-poor CPUs. A/b probe: the
+    /// STARSHOT_WGC_WORKERS env var overrides this (see performance.md).
+    /// </summary>
+    public static int VideoRecordWorkerCount
+    {
+        get => GetValue(16);
+        set => SetValue(value);
+    }
+
+    /// <summary>
+    /// Post-encode recording: frames are converted in real time and written raw to disk
+    /// (VideoRecordRawBufferDir); the actual x264/x265 encode runs in the background
+    /// AFTER stopping. The encoder no longer competes with the capture pipeline for CPU,
+    /// so the capture holds the display's frame rate (e.g. 60 fps at 4K) instead of
+    /// being limited by the encoder (~12 fps at 4K). Cost: raw disk space (4K HDR
+    /// 60 fps writes ~1.4 GB/s, about 84 GB per minute) and the final file only appears
+    /// after the background drain (~5x the clip length at 4K).
+    /// </summary>
+    public static bool VideoRecordPostEncode
+    {
+        get => GetValue(false);
+        set => SetValue(value);
+    }
+
+    /// <summary>
+    /// Post-encode recording raw buffer directory: where the raw capture buffer
+    /// (~Recording_*.raw) is written while capturing; it is deleted after the
+    /// background encode finishes. Empty = the Starshot recordings directory
+    /// (ScreenshotFolder). 4K needs a fast NVMe (an HDD cannot sustain the ~1.4 GB/s
+    /// of 4K HDR 60 fps and the capture will drop frames).
+    /// </summary>
+    public static string VideoRecordRawBufferDir
+    {
+        get => GetValue("");
+        set => SetValue(value);
+    }
+
+    /// <summary>
     /// HDR 截图在主 HDR 文件之外额外保存一份 Ultra HDR JPEG（SDR 基图 + gain map，
     /// 不支持 HDR 的软件也能正常显示）。主文件不受影响。
     /// </summary>

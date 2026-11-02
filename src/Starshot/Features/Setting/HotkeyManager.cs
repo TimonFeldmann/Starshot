@@ -39,6 +39,30 @@ internal static class HotkeyManager
             User32.VK.VK_O
         );
 
+    public static HotkeyInfo RecordFull { get; private set; } =
+        new HotkeyInfo(
+            nameof(AppConfig.VideoRecordFullHotkey),
+            44449,
+            User32.HotKeyModifiers.MOD_ALT,
+            User32.VK.VK_R
+        );
+
+    public static HotkeyInfo RecordRegion { get; private set; } =
+        new HotkeyInfo(
+            nameof(AppConfig.VideoRecordRegionHotkey),
+            44450,
+            User32.HotKeyModifiers.MOD_ALT,
+            User32.VK.VK_T
+        );
+
+    public static HotkeyInfo RecordWindow { get; private set; } =
+        new HotkeyInfo(
+            nameof(AppConfig.VideoRecordWindowHotkey),
+            44451,
+            User32.HotKeyModifiers.MOD_ALT,
+            User32.VK.VK_Y
+        );
+
     private static nint _registeredHwnd;
 
     public static void InitializeHotkey(nint hwnd)
@@ -53,6 +77,9 @@ internal static class HotkeyManager
                     RegionCapture,
                     RegionCopyOnly,
                     RegionOcrCopy,
+                    RecordFull,
+                    RecordRegion,
+                    RecordWindow,
                 }
             )
             {
@@ -124,6 +151,9 @@ internal static class HotkeyManager
                 RegionCapture,
                 RegionCopyOnly,
                 RegionOcrCopy,
+                RecordFull,
+                RecordRegion,
+                RecordWindow,
             }
         )
         {
@@ -257,6 +287,9 @@ internal static class HotkeyManager
             44446 => RegionCapture,
             44447 => RegionCopyOnly,
             44448 => RegionOcrCopy,
+            44449 => RecordFull,
+            44450 => RecordRegion,
+            44451 => RecordWindow,
             _ => null,
         };
     }

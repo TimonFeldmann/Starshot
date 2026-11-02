@@ -40,6 +40,14 @@ internal partial class ScreenCaptureHelper
         "IsCursorCaptureEnabled"
     );
 
+    // 26H2 (IGraphicsCaptureSession5): overrides the compositor's conservative default
+    // frame-delivery pacing; without it WGC delivers at ~12 fps in the HDR/EDR state
+    // (performance.md, WGC root-cause section).
+    public static readonly bool IsMinUpdateIntervalPresent = ApiInformation.IsPropertyPresent(
+        "Windows.Graphics.Capture.GraphicsCaptureSession",
+        "MinUpdateInterval"
+    );
+
     public static readonly bool IsWin10 = Environment.OSVersion.Version.Build < 22000;
 
     /// <summary>

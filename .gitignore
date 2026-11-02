@@ -421,3 +421,13 @@ Screenshots/
 
 # 源码内 Assets 需要纳入版本控制（覆盖通用 Assets/ 忽略，针对 VS 模板的 MSIX Assets 规则）
 !src/Starshot/Assets/
+
+# HdrSignalHost probe tool build output (build with tools/HdrSignalHost/build.ps1)
+tools/HdrSignalHost/*.exe
+
+# DupProbe probe tool build output (build with tools/DupProbe/build.ps1)
+tools/DupProbe/*.exe
+
+# local ffmpeg/ffprobe for the HDR tests (fallback location of LocateFfmpeg)
+tools/ffmpeg/
+tools/nasm/

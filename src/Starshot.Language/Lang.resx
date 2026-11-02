@@ -550,6 +550,81 @@
   <data name="Starshot_Nav_Hotkey" xml:space="preserve">
     <value>Hotkeys</value>
   </data>
+  <data name="RecordingSetting_AudioDevice" xml:space="preserve">
+    <value>Audio device</value>
+  </data>
+  <data name="RecordingSetting_AudioDeviceDesc" xml:space="preserve">
+    <value>The playback device whose audio mix is captured. Keep System default unless recordings come out silent — some virtual mixers forward audio to your real device but expose a silent loopback, so pick the speakers/headphones you actually hear.</value>
+  </data>
+  <data name="RecordingSetting_Bitrate" xml:space="preserve">
+    <value>Bitrate</value>
+  </data>
+  <data name="RecordingSetting_BitrateDesc" xml:space="preserve">
+    <value>Target video bitrate in Mbps (ABR mode). Leave the field empty (or enter 0) to use quality-driven CRF instead, so the file size varies with content. A fixed bitrate keeps the file near bitrate x duration — lower values shrink the file at a quality cost. Applies to both SDR (H.264) and HDR (HEVC) recordings.</value>
+  </data>
+  <data name="RecordingSetting_BitrateInvalid" xml:space="preserve">
+    <value>Enter a number between 0.1 and 1000 (or leave the field empty / 0 for CRF quality mode).</value>
+  </data>
+  <data name="RecordingSetting_CaptureAudio" xml:space="preserve">
+    <value>Capture system audio</value>
+  </data>
+  <data name="RecordingSetting_CaptureAudioDesc" xml:space="preserve">
+    <value>Records the system audio mix (WASAPI loopback, AAC track) into your recordings.</value>
+  </data>
+  <data name="RecordingSetting_EncoderPreset" xml:space="preserve">
+    <value>Encoder speed (HDR)</value>
+  </data>
+  <data name="RecordingSetting_EncoderPresetDesc" xml:space="preserve">
+    <value>Preset for the HDR (HEVC 10-bit) encoder (x265). Faster presets use less CPU and hold higher frame rates but write larger files; slower presets compress harder for smaller files but can limit the achievable frame rate (at 4K, anything slower than veryfast becomes the bottleneck). SDR (H.264) recordings always use a fast preset and are not affected.</value>
+  </data>
+  <data name="RecordingSetting_FastConvert" xml:space="preserve">
+    <value>Fast HDR conversion</value>
+  </data>
+  <data name="RecordingSetting_FastConvertDesc" xml:space="preserve">
+    <value>Uses a smaller, faster color lookup table and simplified chroma math for HDR recordings, lowering CPU usage. Slightly less accurate than the exact mode (up to 1 luma code / 2-3 chroma codes out of 1024, not visible in practice). Off = bit-for-bit exact.</value>
+  </data>
+  <data name="RecordingSetting_PostEncode" xml:space="preserve">
+    <value>Encode after stopping</value>
+  </data>
+  <data name="RecordingSetting_PostEncodeDesc" xml:space="preserve">
+    <value>Captures at full frame rate and writes the frames to disk raw; the actual encode runs in the background after you stop. This keeps the capture at the display's frame rate even when the encoder cannot keep up (e.g. 60 fps at 4K), at the cost of raw disk space (4K HDR 60 fps writes about 1.4 GB/s, roughly 84 GB per minute) and a wait for the final file (about 5x the clip length at 4K).</value>
+  </data>
+  <data name="RecordingSetting_RawBufferDir" xml:space="preserve">
+    <value>Raw buffer folder</value>
+  </data>
+  <data name="RecordingSetting_RawBufferDirDesc" xml:space="preserve">
+    <value>Where the raw capture buffer is written while recording (default: the recordings folder). The final MP4 is still saved to the recordings folder. Use a fast NVMe for 4K recordings.</value>
+  </data>
+  <data name="RecordingSetting_RefreshDevices" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="RecordingSetting_SimdKernel" xml:space="preserve">
+    <value>HDR convert kernel</value>
+  </data>
+  <data name="RecordingSetting_SimdKernelDesc" xml:space="preserve">
+    <value>SIMD kernel for the HDR frame conversion. Auto picks the widest SIMD this CPU supports; the fixed entries are benchmarking/A-B levers (see performance.md). The wide kernels process 16 pixels per iteration with front-loaded memory parallelism and measured fastest on modern CPUs.</value>
+  </data>
+  <data name="RecordingSetting_SystemDefault" xml:space="preserve">
+    <value>System default</value>
+  </data>
+  <data name="RecordingSetting_TargetFps" xml:space="preserve">
+    <value>Target FPS</value>
+  </data>
+  <data name="RecordingSetting_TargetFpsDesc" xml:space="preserve">
+    <value>Caps the recording frame rate. Dropped frames are skipped before the CPU-heavy readback/convert/encode steps, so a lower cap cuts CPU usage and file size (e.g. 15 when the display delivers 60). Leave the field empty (or enter 0) to follow the display's native refresh.</value>
+  </data>
+  <data name="RecordingSetting_TargetFpsInvalid" xml:space="preserve">
+    <value>Enter a whole number between 1 and 240 (or leave the field empty / 0 for native refresh).</value>
+  </data>
+  <data name="RecordingSetting_WorkerCount" xml:space="preserve">
+    <value>Convert workers</value>
+  </data>
+  <data name="RecordingSetting_WorkerCountDesc" xml:space="preserve">
+    <value>Row-pool worker count for the frame conversion. Auto = min(rows, logical processors). Fewer workers can beat more on cache-poor CPUs, so tune the count if you notice conversion stalls.</value>
+  </data>
+  <data name="Starshot_Nav_Recording" xml:space="preserve">
+    <value>Recording</value>
+  </data>
   <data name="Starshot_Nav_Screenshot" xml:space="preserve">
     <value>Screenshot</value>
   </data>
@@ -660,6 +735,54 @@
   </data>
   <data name="Starshot_HotkeyRegionOcrDesc" xml:space="preserve">
     <value>Drag a region or click a window. Recognizes the text in it and copies it to the clipboard; no file is saved.</value>
+  </data>
+  <data name="Starshot_HotkeyRecordFull" xml:space="preserve">
+    <value>Record Full Screen</value>
+  </data>
+  <data name="Starshot_HotkeyRecordFullDesc" xml:space="preserve">
+    <value>Records the monitor of the foreground window (or cursor screen) to an MP4 in the screenshot folder. Press again to stop.</value>
+  </data>
+  <data name="Starshot_HotkeyRecordRegion" xml:space="preserve">
+    <value>Record Region</value>
+  </data>
+  <data name="Starshot_HotkeyRecordRegionDesc" xml:space="preserve">
+    <value>Drag a region to record it as an MP4. The region must stay within a single display. Press again to stop.</value>
+  </data>
+  <data name="Starshot_HotkeyRecordWindow" xml:space="preserve">
+    <value>Record Window</value>
+  </data>
+  <data name="Starshot_HotkeyRecordWindowDesc" xml:space="preserve">
+    <value>Records the foreground window to an MP4. Press again to stop.</value>
+  </data>
+  <data name="Starshot_RecordingScreen" xml:space="preserve">
+    <value>Record Screen</value>
+  </data>
+  <data name="Starshot_RecordingRegion" xml:space="preserve">
+    <value>Record Region</value>
+  </data>
+  <data name="Starshot_RecordingWindow" xml:space="preserve">
+    <value>Record Window</value>
+  </data>
+  <data name="Starshot_RecordingStop" xml:space="preserve">
+    <value>Stop Recording  {0}</value>
+  </data>
+  <data name="Starshot_RecordingSaved" xml:space="preserve">
+    <value>Recording Saved</value>
+  </data>
+  <data name="Starshot_RecordingFailed" xml:space="preserve">
+    <value>Recording Failed</value>
+  </data>
+  <data name="Starshot_RecordingCodecUnavailable" xml:space="preserve">
+    <value>Video encoders are not available (recording is only shipped for x64)</value>
+  </data>
+  <data name="Starshot_RecordingNoForeground" xml:space="preserve">
+    <value>No foreground window to record</value>
+  </data>
+  <data name="Starshot_RecordingWindowMinimized" xml:space="preserve">
+    <value>The foreground window is minimized and cannot be recorded</value>
+  </data>
+  <data name="Starshot_RecordingRegionSpansDisplays" xml:space="preserve">
+    <value>The region must be entirely within a single display</value>
   </data>
   <data name="Starshot_SDRFormat" xml:space="preserve">
     <value>SDR Format</value>
